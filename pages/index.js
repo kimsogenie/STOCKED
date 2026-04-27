@@ -31,6 +31,7 @@ const C = {
   borderMid: 'rgba(0,0,0,0.2)',
   font: "'Pretendard', 'Courier New', monospace",
   mono: "'Courier New', Courier, monospace",
+  receipt: "'Nanum Gothic Coding', 'Courier New', monospace",
 }
 
 function getSpineWidth(pages) {
@@ -382,7 +383,7 @@ export default function Home() {
       <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg }}>
         <NavBar onBack={() => setView('detail')} title="RECEIPT" right="" />
         <div style={{ padding: 20 }}>
-          <div ref={receiptRef} style={{ background: '#fff', border: `0.5px solid ${C.border}`, borderRadius: 3, padding: '24px 20px', fontFamily: C.mono }}>
+          <div ref={receiptRef} style={{ background: '#fff', border: `0.5px solid ${C.border}`, borderRadius: 3, padding: '24px 20px', fontFamily: C.receipt }}>
             <div style={{ textAlign: 'center', fontSize: 16, letterSpacing: '0.3em', color: '#bbb', marginBottom: 14 }}>° ✦ ☆ ✦ °</div>
             <div style={{ textAlign: 'center', fontSize: 15, fontWeight: 600, color: '#1A1A1A', marginBottom: 4, fontFamily: C.font }}>{b.title}</div>
             <div style={{ textAlign: 'center', fontSize: 9, letterSpacing: '0.14em', color: '#999', marginBottom: 13 }}>{b.author} · {b.publisher}</div>
