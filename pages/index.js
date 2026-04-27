@@ -29,20 +29,22 @@ const C = {
   faint: 'rgba(0,0,0,0.18)',
   border: 'rgba(0,0,0,0.1)',
   borderMid: 'rgba(0,0,0,0.2)',
-  font: "'Pretendard', 'Courier New', monospace",
+  font: "'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif",
   mono: "'Courier New', Courier, monospace",
   receipt: "'Nanum Gothic Coding', 'Courier New', monospace",
 }
 
-function getSpineWidth(pages) {
-  const MIN_W = 48, MAX_W = 88, MIN_P = 100, MAX_P = 700
+function getSpineWidth(pages, isMobile) {
+  const MIN_W = isMobile ? 32 : 48
+  const MAX_W = isMobile ? 58 : 88
+  const MIN_P = 100, MAX_P = 700
   const c = Math.max(MIN_P, Math.min(MAX_P, pages || 250))
   return Math.round(MIN_W + ((c - MIN_P) / (MAX_P - MIN_P)) * (MAX_W - MIN_W))
 }
 
 function getTitleMode(title, width) {
   const clean = title.replace(/\s/g, '')
-  return clean.length * 11 <= width - 22 ? 'h' : 'v'
+  return clean.length * (width < 50 ? 9 : 11) <= width - 16 ? 'h' : 'v'
 }
 
 function Barcode({ seed }) {
@@ -55,10 +57,8 @@ function Barcode({ seed }) {
     x += w + g
   }
   return (
-    <svg viewBox={`0 0 ${x} 34`} style={{ width: 176, height: 34, display: 'block', margin: '0 auto' }}>
-      {bars.map((b, i) => (
-        <rect key={i} x={b.x} y={0} width={b.w} height={34} fill="#1A1A1A" />
-      ))}
+    <svg viewBox={`0 0 ${x} 34`} style={{ width: '100%', maxWidth: 200, height: 34, display: 'block', margin: '0 auto' }}>
+      {bars.map((b, i) => <rect key={i} x={b.x} y={0} width={b.w} height={34} fill="#1A1A1A" />)}
     </svg>
   )
 }
@@ -66,9 +66,9 @@ function Barcode({ seed }) {
 function NavBar({ onBack, title, right }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: `0.5px solid ${C.border}` }}>
-      <span style={{ fontSize: 10, letterSpacing: '0.1em', color: C.muted, cursor: 'pointer', fontFamily: C.font }} onClick={onBack}>← BACK</span>
-      <span style={{ fontSize: 10, letterSpacing: '0.2em', color: C.text, textTransform: 'uppercase', fontFamily: C.mono }}>{title}</span>
-      <span style={{ fontSize: 10, color: C.muted, minWidth: 40, textAlign: 'right', fontFamily: C.font }}>{right}</span>
+      <span style={{ fontSize: 12, color: C.muted, cursor: 'pointer', fontFamily: C.font }} onClick={onBack}>← 뒤로</span>
+      <span style={{ fontSize: 11, letterSpacing: '0.15em', color: C.text, textTransform: 'uppercase', fontFamily: C.mono }}>{title}</span>
+      <span style={{ fontSize: 11, color: C.muted, minWidth: 40, textAlign: 'right', fontFamily: C.font }}>{right}</span>
     </div>
   )
 }
@@ -80,7 +80,7 @@ function Divider() {
 export default function Home() {
   const [view, setView] = useState('library')
   const [books, setBooks] = useState([])
-  const [userId, setUserId] = useState(null)
+  const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [selectedBook, setSelectedBook] = useState(null)
   const [selectedReceipt, setSelectedReceipt] = useState(null)
@@ -89,26 +89,44 @@ export default function Home() {
   const [searching, setSearching] = useState(false)
   const [nickname, setNickname] = useState('')
   const [quotes, setQuotes] = useState([{ text: '', page: '' }])
+  const [isMobile, setIsMobile] = useState(true)
   const receiptRef = useRef(null)
 
-  useEffect(() => { initAuth() }, [])
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 480)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
+  }, [])
 
-  const initAuth = async () => {
-    setLoading(true)
-    const { data: { session } } = await supabase.auth.getSession()
-    let user = session?.user
-    if (!user) {
-      const { data } = await supabase.auth.signInAnonymously()
-      user = data?.user
-    }
-    if (user) {
-      setUserId(user.id)
-      await loadBooks(user.id)
-    }
-    setLoading(false)
-  }
+  useEffect(() => {
+    // 로그인 상태 확인
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        setUser(session.user)
+        loadBooks(session.user.id)
+      } else {
+        setLoading(false)
+      }
+    })
+
+    // 로그인/로그아웃 이벤트 감지
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session?.user) {
+        setUser(session.user)
+        loadBooks(session.user.id)
+      } else {
+        setUser(null)
+        setBooks([])
+        setLoading(false)
+      }
+    })
+
+    return () => subscription.unsubscribe()
+  }, [])
 
   const loadBooks = async (uid) => {
+    setLoading(true)
     const { data } = await supabase.from('books').select('*').eq('user_id', uid).order('created_at', { ascending: true })
     if (data) {
       setBooks(data.map(b => ({
@@ -117,18 +135,37 @@ export default function Home() {
         h: b.h, bg: b.bg, spineText: b.spine_text, fp: b.fp, receipts: b.receipts || [],
       })))
     }
+    setLoading(false)
   }
 
   const saveBooks = async (updated) => {
     setBooks(updated)
     for (const b of updated) {
       await supabase.from('books').upsert({
-        id: b.id, user_id: userId, title: b.title, author: b.author,
+        id: b.id, user_id: user.id, title: b.title, author: b.author,
         publisher: b.publisher, thumbnail: b.thumbnail, read_date: b.readDate,
         pages: b.pages, h: b.h, bg: b.bg, spine_text: b.spineText,
         fp: b.fp, receipts: b.receipts,
       })
     }
+  }
+
+  const loginWithGoogle = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: { redirectTo: window.location.origin }
+    })
+  }
+
+  const loginWithKakao = async () => {
+    await supabase.auth.signInWithOAuth({
+      provider: 'kakao',
+      options: { redirectTo: window.location.origin }
+    })
+  }
+
+  const logout = async () => {
+    await supabase.auth.signOut()
   }
 
   const handleSearch = async () => {
@@ -148,7 +185,7 @@ export default function Home() {
       id: Date.now(), title: kakaoBook.title, author: kakaoBook.authors?.join(', ') || '',
       publisher: kakaoBook.publisher || '', thumbnail: kakaoBook.thumbnail || '',
       readDate: new Date().toLocaleDateString('ko-KR').replace(/\. /g, '.').slice(0, -1),
-      pages: 250, h: 200 + Math.floor(Math.random() * 60),
+      pages: 250, h: isMobile ? 160 + Math.floor(Math.random() * 50) : 200 + Math.floor(Math.random() * 60),
       bg: colorSet.bg, spineText: colorSet.text,
       fp: books.length % FONT_PAIRS.length, receipts: [],
     }
@@ -186,82 +223,145 @@ export default function Home() {
   }
 
   const inputStyle = {
-    width: '100%', padding: '9px 10px', fontSize: 13,
+    width: '100%', padding: '11px 12px', fontSize: 15,
     border: `0.5px solid ${C.borderMid}`,
     background: 'transparent', color: C.text,
     fontFamily: C.font, outline: 'none',
+    WebkitAppearance: 'none', borderRadius: 0,
   }
   const btnOutline = {
-    width: '100%', padding: 12, fontSize: 11, letterSpacing: '0.1em',
-    textTransform: 'uppercase', cursor: 'pointer',
-    border: `0.5px solid ${C.borderMid}`,
+    width: '100%', padding: '14px 12px', fontSize: 13, letterSpacing: '0.05em',
+    cursor: 'pointer', border: `0.5px solid ${C.borderMid}`,
     background: 'transparent', color: C.text, fontFamily: C.font,
   }
   const btnSolid = {
-    width: '100%', padding: 12, fontSize: 11, letterSpacing: '0.1em',
-    textTransform: 'uppercase', cursor: 'pointer',
-    border: 'none', background: C.text, color: C.bg, fontFamily: C.font,
+    width: '100%', padding: '14px 12px', fontSize: 13, letterSpacing: '0.05em',
+    cursor: 'pointer', border: 'none',
+    background: C.text, color: C.bg, fontFamily: C.font,
+  }
+
+  // ── 로그인 화면 ──
+  if (!user && !loading) {
+    return (
+      <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 32px' }}>
+          <img src="/logo.png" alt="STOCKED" style={{ height: 40, marginBottom: 48, objectFit: 'contain' }} />
+
+          <div style={{ width: '100%', marginBottom: 12 }}>
+            <button
+              onClick={loginWithGoogle}
+              style={{
+                ...btnOutline,
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18">
+                <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
+                <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
+                <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
+                <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
+              </svg>
+              Google로 로그인
+            </button>
+          </div>
+
+          <div style={{ width: '100%' }}>
+            <button
+              onClick={loginWithKakao}
+              style={{
+                ...btnSolid,
+                background: '#FEE500', color: '#191919',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
+              }}
+            >
+              <svg width="18" height="18" viewBox="0 0 18 18">
+                <path fill="#191919" d="M9 0C4.029 0 0 3.136 0 7c0 2.496 1.659 4.685 4.163 5.934L3.1 17.1a.4.4 0 0 0 .59.432L9.3 14.08c-.098.006-.197.01-.3.01-4.971 0-9-3.136-9-7s4.029-7 9-7 9 3.136 9 7c0 1.74-.71 3.337-1.88 4.579L18 9c0-4.971-4.029-9-9-9z"/>
+              </svg>
+              카카오로 로그인
+            </button>
+          </div>
+
+          <div style={{ marginTop: 32, fontSize: 11, color: C.faint, textAlign: 'center', fontFamily: C.font, lineHeight: 1.8 }}>
+            로그인하면 어느 기기에서든<br />내 서재를 볼 수 있어요
+          </div>
+        </div>
+      </div>
+    )
   }
 
   if (loading) {
     return (
       <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ fontSize: 10, letterSpacing: '0.2em', color: C.muted, textTransform: 'uppercase', fontFamily: C.mono }}>LOADING...</div>
+        <div style={{ fontSize: 11, letterSpacing: '0.2em', color: C.muted, textTransform: 'uppercase', fontFamily: C.mono }}>LOADING...</div>
       </div>
     )
   }
 
   // ── LIBRARY ──
   if (view === 'library') {
+    const shelfH = isMobile ? 220 : 300
     return (
       <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg }}>
-        {/* 헤더 */}
-        <div style={{ padding: '28px 20px 20px', borderBottom: `0.5px solid ${C.border}` }}>
-          <img src="/logo.png" alt="STOCKED" style={{ height: 36, display: 'block' }} />
+        <div style={{ padding: '20px 20px 16px', borderBottom: `0.5px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <img src="/logo.png" alt="STOCKED" style={{ height: isMobile ? 28 : 36, objectFit: 'contain' }} />
+          <button onClick={logout} style={{ fontSize: 11, color: C.faint, background: 'none', border: 'none', cursor: 'pointer', fontFamily: C.font }}>로그아웃</button>
         </div>
 
-        {/* 책장 */}
-        <div style={{ background: C.bgShelf, marginTop: 12 }}>
-          <div style={{ display: 'flex', gap: 3, overflowX: 'auto', padding: '40px 20px 32px', alignItems: 'flex-end', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
+        <div style={{ background: C.bgShelf }}>
+          <div style={{
+            display: 'flex', gap: isMobile ? 2 : 3,
+            overflowX: 'auto', overflowY: 'hidden',
+            padding: isMobile ? '28px 16px 20px' : '40px 20px 32px',
+            alignItems: 'flex-end', height: shelfH,
+            scrollbarWidth: 'none', msOverflowStyle: 'none',
+            WebkitOverflowScrolling: 'touch',
+          }}>
             {books.map((b) => {
-              const w = getSpineWidth(b.pages)
+              const w = getSpineWidth(b.pages, isMobile)
               const mode = getTitleMode(b.title, w)
               const fp = FONT_PAIRS[b.fp]
               const tc = b.spineText || '#1A1A1A'
+              const spineH = Math.min(b.h || 180, shelfH - (isMobile ? 48 : 60))
+              const titleFs = isMobile ? 10 : 12
+              const authorFs = isMobile ? 7 : 8
               return (
-                <div
-                  key={b.id}
-                  onClick={() => { setSelectedBook(b); setView('detail') }}
+                <div key={b.id} onClick={() => { setSelectedBook(b); setView('detail') }}
                   style={{
-                    width: w, height: b.h || 230, background: b.bg,
-                    padding: '12px 11px', borderRight: '3px solid rgba(0,0,0,0.07)',
+                    width: w, height: spineH, background: b.bg,
+                    padding: isMobile ? '10px 7px' : '12px 11px',
+                    borderRight: '2px solid rgba(0,0,0,0.06)',
                     display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
                     cursor: 'pointer', flexShrink: 0,
                     transition: 'transform 0.2s ease, box-shadow 0.2s ease',
                   }}
-                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-12px)'; e.currentTarget.style.boxShadow = '0 10px 24px rgba(0,0,0,0.12)' }}
+                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-10px)'; e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,0,0,0.12)' }}
                   onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
                 >
-                  <div style={{ fontSize: 8, letterSpacing: '0.05em', color: tc, opacity: 0.7, wordBreak: 'keep-all', fontFamily: C.font }}>{b.author}</div>
+                  <div style={{ fontSize: authorFs, color: tc, opacity: 0.65, wordBreak: 'keep-all', fontFamily: C.font, lineHeight: 1.3 }}>{b.author}</div>
                   <div>
-                    {b.receipts.length > 0 && <div style={{ width: 4, height: 4, borderRadius: '50%', background: tc, opacity: 0.5, marginBottom: 8 }} />}
+                    {b.receipts.length > 0 && <div style={{ width: 3, height: 3, borderRadius: '50%', background: tc, opacity: 0.5, marginBottom: 6 }} />}
                     {mode === 'v'
-                      ? <div style={{ writingMode: 'vertical-rl', fontSize: 12, fontWeight: fp.fw, color: tc, fontFamily: fp.f, lineHeight: `${w - 10}px` }}>{b.title}</div>
-                      : <div style={{ fontSize: 11, fontWeight: fp.fw, color: tc, fontFamily: fp.f, lineHeight: 1.25, wordBreak: 'keep-all' }}>{b.title}</div>
+                      ? <div style={{ writingMode: 'vertical-rl', fontSize: titleFs, fontWeight: fp.fw, color: tc, fontFamily: fp.f, lineHeight: `${w - 8}px`, overflow: 'hidden' }}>{b.title}</div>
+                      : <div style={{ fontSize: titleFs - 1, fontWeight: fp.fw, color: tc, fontFamily: fp.f, lineHeight: 1.3, wordBreak: 'keep-all' }}>{b.title}</div>
                     }
                   </div>
                 </div>
               )
             })}
-            <div onClick={() => setView('search')} style={{ width: 44, height: 150, border: `1px dashed ${C.borderMid}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, color: C.muted, fontSize: 20 }}>+</div>
+            <div onClick={() => setView('search')} style={{
+              width: isMobile ? 32 : 44, height: isMobile ? 120 : 150,
+              border: `1px dashed ${C.borderMid}`,
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', flexShrink: 0, color: C.muted, fontSize: isMobile ? 16 : 20,
+            }}>+</div>
           </div>
-          <div style={{ fontSize: 8, letterSpacing: '0.14em', color: C.faint, textAlign: 'center', paddingBottom: 16, fontFamily: C.mono }}>— 스크롤 —</div>
+          <div style={{ fontSize: 8, letterSpacing: '0.12em', color: C.faint, textAlign: 'center', paddingBottom: 14, fontFamily: C.mono }}>— 스크롤 —</div>
         </div>
 
         {books.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '40px 20px', color: C.muted, fontSize: 13, lineHeight: 2, fontFamily: C.font }}>
+          <div style={{ textAlign: 'center', padding: '40px 20px', color: C.muted, fontSize: 14, lineHeight: 2, fontFamily: C.font }}>
             <div>아직 책이 없어요</div>
-            <div style={{ fontSize: 11, color: C.faint }}>+ 를 눌러 첫 번째 책을 추가해보세요</div>
+            <div style={{ fontSize: 12, color: C.faint, marginTop: 4 }}>+ 를 눌러 첫 번째 책을 추가해보세요</div>
           </div>
         )}
       </div>
@@ -276,17 +376,17 @@ export default function Home() {
         <div style={{ padding: 20 }}>
           <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
             <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearch()} placeholder="책 제목 또는 저자..." style={{ ...inputStyle, flex: 1 }} />
-            <button onClick={handleSearch} style={{ ...btnSolid, width: 'auto', padding: '0 16px' }}>{searching ? '...' : '검색'}</button>
+            <button onClick={handleSearch} style={{ ...btnSolid, width: 'auto', padding: '0 18px' }}>{searching ? '...' : '검색'}</button>
           </div>
           {searchResults.map((book, i) => (
-            <div key={i} onClick={() => addBook(book)} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: `0.5px solid ${C.border}`, cursor: 'pointer' }}>
+            <div key={i} onClick={() => addBook(book)} style={{ display: 'flex', gap: 14, padding: '14px 0', borderBottom: `0.5px solid ${C.border}`, cursor: 'pointer' }}>
               {book.thumbnail
-                ? <img src={book.thumbnail} alt={book.title} style={{ width: 44, height: 60, objectFit: 'cover', flexShrink: 0 }} />
-                : <div style={{ width: 44, height: 60, background: '#E8E4DC', flexShrink: 0 }} />
+                ? <img src={book.thumbnail} alt={book.title} style={{ width: 48, height: 66, objectFit: 'cover', flexShrink: 0 }} />
+                : <div style={{ width: 48, height: 66, background: '#E8E4DC', flexShrink: 0 }} />
               }
               <div>
-                <div style={{ fontSize: 13, color: C.text, marginBottom: 4, lineHeight: 1.4, fontFamily: C.font }}>{book.title}</div>
-                <div style={{ fontSize: 11, color: C.muted, fontFamily: C.font }}>{book.authors?.join(', ')} · {book.publisher}</div>
+                <div style={{ fontSize: 14, color: C.text, marginBottom: 5, lineHeight: 1.4, fontFamily: C.font }}>{book.title}</div>
+                <div style={{ fontSize: 12, color: C.muted, fontFamily: C.font }}>{book.authors?.join(', ')} · {book.publisher}</div>
               </div>
             </div>
           ))}
@@ -304,13 +404,13 @@ export default function Home() {
         <NavBar onBack={() => setView('library')} title="BOOK" right={`영수증 ${rc}`} />
         <div style={{ display: 'flex', gap: 16, padding: 20, borderBottom: `0.5px solid ${C.border}` }}>
           {b.thumbnail
-            ? <img src={b.thumbnail} alt={b.title} style={{ width: 64, height: 88, objectFit: 'cover', flexShrink: 0 }} />
-            : <div style={{ width: 64, height: 88, background: b.bg, borderRight: '3px solid rgba(0,0,0,0.08)', flexShrink: 0 }} />
+            ? <img src={b.thumbnail} alt={b.title} style={{ width: 68, height: 94, objectFit: 'cover', flexShrink: 0, boxShadow: '2px 2px 8px rgba(0,0,0,0.12)' }} />
+            : <div style={{ width: 68, height: 94, background: b.bg, borderRight: '3px solid rgba(0,0,0,0.08)', flexShrink: 0 }} />
           }
-          <div>
-            <div style={{ fontSize: 16, fontWeight: 600, color: C.text, marginBottom: 5, lineHeight: 1.4, fontFamily: C.font }}>{b.title}</div>
-            <div style={{ fontSize: 12, color: C.muted, marginBottom: 2, fontFamily: C.font }}>{b.author}</div>
-            <div style={{ fontSize: 12, color: C.muted, marginBottom: 12, fontFamily: C.font }}>{b.publisher}</div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: 17, fontWeight: 600, color: C.text, marginBottom: 6, lineHeight: 1.4, fontFamily: C.font }}>{b.title}</div>
+            <div style={{ fontSize: 13, color: C.muted, marginBottom: 2, fontFamily: C.font }}>{b.author}</div>
+            <div style={{ fontSize: 13, color: C.muted, marginBottom: 12, fontFamily: C.font }}>{b.publisher}</div>
             <div style={{ fontSize: 10, letterSpacing: '0.08em', color: C.faint, fontFamily: C.mono }}>READ · {b.readDate}</div>
           </div>
         </div>
@@ -318,16 +418,17 @@ export default function Home() {
           <button onClick={() => { setNickname(''); setQuotes([{ text: '', page: '' }]); setView('form') }} style={btnSolid}>영수증 발급하기 →</button>
         </div>
         <div style={{ padding: 20 }}>
-          <div style={{ fontSize: 10, letterSpacing: '0.15em', color: C.muted, textTransform: 'uppercase', marginBottom: 12, fontFamily: C.mono }}>발급된 영수증</div>
+          <div style={{ fontSize: 10, letterSpacing: '0.14em', color: C.muted, textTransform: 'uppercase', marginBottom: 14, fontFamily: C.mono }}>발급된 영수증</div>
           {rc === 0
-            ? <div style={{ fontSize: 13, color: C.muted, textAlign: 'center', padding: '16px 0', fontFamily: C.font }}>아직 없어요</div>
+            ? <div style={{ fontSize: 14, color: C.muted, textAlign: 'center', padding: '20px 0', fontFamily: C.font }}>아직 없어요</div>
             : b.receipts.map((r, i) => (
-                <div key={r.id} onClick={() => { setSelectedReceipt(r); setView('receipt') }} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: `0.5px solid ${C.border}`, cursor: 'pointer' }}>
+                <div key={r.id} onClick={() => { setSelectedReceipt(r); setView('receipt') }}
+                  style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: `0.5px solid ${C.border}`, cursor: 'pointer' }}>
                   <div>
-                    <div style={{ fontSize: 12, color: C.text, marginBottom: 2, fontFamily: C.font }}>ORDER #{String(i + 1).padStart(4, '0')} · {r.nickname}</div>
-                    <div style={{ fontSize: 10, color: C.muted, fontFamily: C.font }}>{r.date} · {r.quotes.length}개의 문장</div>
+                    <div style={{ fontSize: 13, color: C.text, marginBottom: 3, fontFamily: C.font }}>ORDER #{String(i + 1).padStart(4, '0')} · {r.nickname}</div>
+                    <div style={{ fontSize: 11, color: C.muted, fontFamily: C.font }}>{r.date} · {r.quotes.length}개의 문장</div>
                   </div>
-                  <span style={{ fontSize: 11, color: C.muted }}>→</span>
+                  <span style={{ fontSize: 14, color: C.muted }}>→</span>
                 </div>
               ))
           }
@@ -343,29 +444,31 @@ export default function Home() {
       <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg }}>
         <NavBar onBack={() => setView('detail')} title="영수증 발급" right="" />
         <div style={{ padding: '16px 20px', borderBottom: `0.5px solid ${C.border}` }}>
-          <div style={{ fontSize: 10, letterSpacing: '0.15em', color: C.muted, textTransform: 'uppercase', marginBottom: 5, fontFamily: C.mono }}>BOOK</div>
-          <div style={{ fontSize: 14, fontWeight: 600, color: C.text, fontFamily: C.font }}>{b.title}</div>
+          <div style={{ fontSize: 10, letterSpacing: '0.14em', color: C.muted, textTransform: 'uppercase', marginBottom: 6, fontFamily: C.mono }}>BOOK</div>
+          <div style={{ fontSize: 15, fontWeight: 600, color: C.text, fontFamily: C.font }}>{b.title}</div>
         </div>
         <div style={{ padding: '16px 20px', borderBottom: `0.5px solid ${C.border}` }}>
-          <div style={{ fontSize: 10, letterSpacing: '0.15em', color: C.muted, textTransform: 'uppercase', marginBottom: 8, fontFamily: C.mono }}>CARDHOLDER</div>
+          <div style={{ fontSize: 10, letterSpacing: '0.14em', color: C.muted, textTransform: 'uppercase', marginBottom: 8, fontFamily: C.mono }}>CARDHOLDER</div>
           <input value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder="닉네임 입력" style={inputStyle} />
         </div>
         <div style={{ padding: 20 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
-            <div style={{ fontSize: 10, letterSpacing: '0.15em', color: C.muted, textTransform: 'uppercase', fontFamily: C.mono }}>명대사</div>
-            <div style={{ fontSize: 11, color: C.faint, fontFamily: C.font }}>{quotes.filter((q) => q.text).length}개 입력됨</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+            <div style={{ fontSize: 10, letterSpacing: '0.14em', color: C.muted, textTransform: 'uppercase', fontFamily: C.mono }}>명대사</div>
+            <div style={{ fontSize: 12, color: C.faint, fontFamily: C.font }}>{quotes.filter((q) => q.text).length}개 입력됨</div>
           </div>
           {quotes.map((q, i) => (
-            <div key={i} style={{ background: '#EDE9E2', padding: 12, borderRadius: 3, marginBottom: 9 }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 7 }}>
+            <div key={i} style={{ background: '#EDE9E2', padding: 14, borderRadius: 4, marginBottom: 10 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                 <span style={{ fontSize: 10, color: C.muted, fontFamily: C.mono }}>#{String(i + 1).padStart(2, '0')}</span>
-                {quotes.length > 1 && <span style={{ fontSize: 11, cursor: 'pointer', color: C.muted, fontFamily: C.font }} onClick={() => setQuotes(quotes.filter((_, idx) => idx !== i))}>삭제</span>}
+                {quotes.length > 1 && <span style={{ fontSize: 13, cursor: 'pointer', color: C.muted, fontFamily: C.font }} onClick={() => setQuotes(quotes.filter((_, idx) => idx !== i))}>삭제</span>}
               </div>
-              <textarea value={q.text} onChange={(e) => { const u = [...quotes]; u[i].text = e.target.value; setQuotes(u) }} placeholder="명대사를 입력하세요" style={{ ...inputStyle, height: 64, resize: 'none', marginBottom: 5 }} />
-              <input value={q.page} onChange={(e) => { const u = [...quotes]; u[i].page = e.target.value; setQuotes(u) }} placeholder="페이지 번호 (예: 42)" style={inputStyle} />
+              <textarea value={q.text} onChange={(e) => { const u = [...quotes]; u[i].text = e.target.value; setQuotes(u) }}
+                placeholder="명대사를 입력하세요" style={{ ...inputStyle, height: 72, resize: 'none', marginBottom: 8 }} />
+              <input value={q.page} onChange={(e) => { const u = [...quotes]; u[i].page = e.target.value; setQuotes(u) }}
+                placeholder="페이지 번호 (예: 42)" style={inputStyle} />
             </div>
           ))}
-          <button onClick={() => setQuotes([...quotes, { text: '', page: '' }])} style={{ ...btnOutline, marginBottom: 8 }}>+ 명대사 추가</button>
+          <button onClick={() => setQuotes([...quotes, { text: '', page: '' }])} style={{ ...btnOutline, marginBottom: 10 }}>+ 명대사 추가</button>
           <button onClick={generateReceipt} style={btnSolid}>영수증 생성하기 →</button>
         </div>
       </div>
@@ -383,37 +486,37 @@ export default function Home() {
       <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg }}>
         <NavBar onBack={() => setView('detail')} title="RECEIPT" right="" />
         <div style={{ padding: 20 }}>
-          <div ref={receiptRef} style={{ background: '#fff', border: `0.5px solid ${C.border}`, borderRadius: 3, padding: '24px 20px', fontFamily: C.receipt }}>
-            <div style={{ textAlign: 'center', fontSize: 16, letterSpacing: '0.3em', color: '#bbb', marginBottom: 14 }}>° ✦ ☆ ✦ °</div>
-            <div style={{ textAlign: 'center', fontSize: 15, fontWeight: 600, color: '#1A1A1A', marginBottom: 4, fontFamily: C.font }}>{b.title}</div>
-            <div style={{ textAlign: 'center', fontSize: 9, letterSpacing: '0.14em', color: '#999', marginBottom: 13 }}>{b.author} · {b.publisher}</div>
-            <div style={{ textAlign: 'center', fontSize: 11, color: '#1A1A1A', marginBottom: 3 }}>ORDER {orderNum} FOR {r.nickname} ☆</div>
-            <div style={{ textAlign: 'center', fontSize: 10, color: '#aaa' }}>{r.date}</div>
+          <div ref={receiptRef} style={{ background: '#fff', border: `0.5px solid ${C.border}`, borderRadius: 3, padding: '24px 18px', fontFamily: C.receipt }}>
+            <div style={{ textAlign: 'center', fontSize: 15, letterSpacing: '0.3em', color: '#bbb', marginBottom: 14 }}>° ✦ ☆ ✦ °</div>
+            <div style={{ textAlign: 'center', fontSize: 15, fontWeight: 700, color: '#1A1A1A', marginBottom: 4 }}>{b.title}</div>
+            <div style={{ textAlign: 'center', fontSize: 11, letterSpacing: '0.1em', color: '#999', marginBottom: 13 }}>{b.author} · {b.publisher}</div>
+            <div style={{ textAlign: 'center', fontSize: 12, color: '#1A1A1A', marginBottom: 3 }}>ORDER {orderNum} FOR {r.nickname} ☆</div>
+            <div style={{ textAlign: 'center', fontSize: 11, color: '#aaa' }}>{r.date}</div>
             <Divider />
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, letterSpacing: '0.1em', color: '#aaa', marginBottom: 9 }}>
-              <span>NO</span><span style={{ flex: 1, textAlign: 'left', paddingLeft: 7 }}>SENTENCE</span><span>PAGE</span>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, letterSpacing: '0.08em', color: '#aaa', marginBottom: 10 }}>
+              <span>NO</span><span style={{ flex: 1, textAlign: 'left', paddingLeft: 8 }}>SENTENCE</span><span>PAGE</span>
             </div>
             {r.quotes.map((q, i) => (
-              <div key={i} style={{ display: 'flex', gap: 7, marginBottom: 5, alignItems: 'flex-start', fontSize: 12, lineHeight: 1.6, color: '#1A1A1A', fontFamily: C.font }}>
-                <span style={{ minWidth: 20, color: '#aaa', fontSize: 10, fontFamily: C.mono }}>{String(i + 1).padStart(2, '0')}</span>
-                <span style={{ flex: 1, paddingRight: 6 }}>{q.text}</span>
-                <span style={{ fontSize: 10, color: '#aaa', whiteSpace: 'nowrap', fontFamily: C.mono }}>p.{q.page || '—'}</span>
+              <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'flex-start', fontSize: 13, lineHeight: 1.7, color: '#1A1A1A' }}>
+                <span style={{ minWidth: 22, color: '#aaa', fontSize: 11, flexShrink: 0 }}>{String(i + 1).padStart(2, '0')}</span>
+                <span style={{ flex: 1 }}>{q.text}</span>
+                <span style={{ fontSize: 11, color: '#aaa', whiteSpace: 'nowrap', flexShrink: 0 }}>p.{q.page || '—'}</span>
               </div>
             ))}
             <Divider />
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, lineHeight: 2.1, color: '#1A1A1A' }}><span>ITEM COUNT</span><span>{r.quotes.length}</span></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontWeight: 600, color: '#1A1A1A' }}><span>TOTAL</span><span>{r.quotes.length}개의 문장</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, lineHeight: 2.2, color: '#1A1A1A' }}><span>ITEM COUNT</span><span>{r.quotes.length}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 700, color: '#1A1A1A' }}><span>TOTAL</span><span>{r.quotes.length}개의 문장</span></div>
             <Divider />
-            <div style={{ fontSize: 11, lineHeight: 2.2, color: '#1A1A1A' }}>
+            <div style={{ fontSize: 12, lineHeight: 2.3, color: '#1A1A1A' }}>
               <div>CARD #: {cardNum}</div>
               <div>AUTH CODE: {authCode}</div>
               <div>CARDHOLDER: {r.nickname} ☆</div>
             </div>
             <Divider />
             <Barcode seed={r.id} />
-            <div style={{ textAlign: 'center', fontSize: 9, letterSpacing: '0.2em', color: '#ccc', marginTop: 8 }}>THANK YOU FOR READING!</div>
+            <div style={{ textAlign: 'center', fontSize: 10, letterSpacing: '0.18em', color: '#ccc', marginTop: 10 }}>THANK YOU FOR READING!</div>
           </div>
-          <div style={{ marginTop: 10, display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
             <button onClick={saveAsImage} style={btnOutline}>이미지로 저장하기 ↓</button>
             <button onClick={() => setView('detail')} style={btnOutline}>서재로 돌아가기</button>
           </div>
