@@ -15,6 +15,10 @@ export default function App({ Component, pageProps }) {
           rel="stylesheet"
           href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css"
         />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Nanum+Gothic+Coding&display=swap"
+          rel="stylesheet"
+        />
       </Head>
       <Component {...pageProps} />
     </>
