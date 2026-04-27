@@ -160,7 +160,7 @@ export default function Home() {
   const loginWithKakao = async () => {
     await supabase.auth.signInWithOAuth({
       provider: 'kakao',
-      options: { redirectTo: window.location.origin }
+      options: { redirectTo: window.location.origin, scopes: 'profile_nickname profile_image' }
     })
   }
 
