@@ -1,4 +1,10 @@
 import { useState, useEffect, useRef } from 'react'
+import { createClient } from '@supabase/supabase-js'
+
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+)
 
 const FONT_PAIRS = [
   { f: "Georgia, 'Times New Roman', serif", fw: '700' },
@@ -71,6 +77,8 @@ function Divider() {
 export default function Home() {
   const [view, setView] = useState('library')
   const [books, setBooks] = useState([])
+  const [userId, setUserId] = useState(null)
+  const [loading, setLoading] = useState(true)
   const [selectedBook, setSelectedBook] = useState(null)
   const [selectedReceipt, setSelectedReceipt] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -81,13 +89,67 @@ export default function Home() {
   const receiptRef = useRef(null)
 
   useEffect(() => {
-    const saved = localStorage.getItem('stocked_books')
-    if (saved) setBooks(JSON.parse(saved))
+    initAuth()
   }, [])
 
-  const saveBooks = (updated) => {
+  const initAuth = async () => {
+    setLoading(true)
+    const { data: { session } } = await supabase.auth.getSession()
+    let user = session?.user
+    if (!user) {
+      const { data } = await supabase.auth.signInAnonymously()
+      user = data?.user
+    }
+    if (user) {
+      setUserId(user.id)
+      await loadBooks(user.id)
+    }
+    setLoading(false)
+  }
+
+  const loadBooks = async (uid) => {
+    const { data } = await supabase
+      .from('books')
+      .select('*')
+      .eq('user_id', uid)
+      .order('created_at', { ascending: true })
+    if (data) {
+      setBooks(data.map(b => ({
+        id: b.id,
+        title: b.title,
+        author: b.author,
+        publisher: b.publisher,
+        thumbnail: b.thumbnail,
+        readDate: b.read_date,
+        pages: b.pages,
+        h: b.h,
+        bg: b.bg,
+        spineText: b.spine_text,
+        fp: b.fp,
+        receipts: b.receipts || [],
+      })))
+    }
+  }
+
+  const saveBooks = async (updated) => {
     setBooks(updated)
-    localStorage.setItem('stocked_books', JSON.stringify(updated))
+    for (const b of updated) {
+      await supabase.from('books').upsert({
+        id: b.id,
+        user_id: userId,
+        title: b.title,
+        author: b.author,
+        publisher: b.publisher,
+        thumbnail: b.thumbnail,
+        read_date: b.readDate,
+        pages: b.pages,
+        h: b.h,
+        bg: b.bg,
+        spine_text: b.spineText,
+        fp: b.fp,
+        receipts: b.receipts,
+      })
+    }
   }
 
   const handleSearch = async () => {
@@ -103,7 +165,7 @@ export default function Home() {
     setSearching(false)
   }
 
-  const addBook = (kakaoBook) => {
+  const addBook = async (kakaoBook) => {
     const colorSet = SPINE_COLORS[books.length % SPINE_COLORS.length]
     const newBook = {
       id: Date.now(),
@@ -119,13 +181,13 @@ export default function Home() {
       fp: books.length % FONT_PAIRS.length,
       receipts: [],
     }
-    saveBooks([...books, newBook])
+    await saveBooks([...books, newBook])
     setView('library')
     setSearchQuery('')
     setSearchResults([])
   }
 
-  const generateReceipt = () => {
+  const generateReceipt = async () => {
     if (!nickname.trim()) return alert('닉네임을 입력해주세요')
     const valid = quotes.filter((q) => q.text.trim())
     if (!valid.length) return alert('명대사를 하나 이상 입력해주세요')
@@ -135,7 +197,7 @@ export default function Home() {
     const updated = books.map((b) =>
       b.id === selectedBook.id ? { ...b, receipts: [...b.receipts, newReceipt] } : b
     )
-    saveBooks(updated)
+    await saveBooks(updated)
     const updatedBook = updated.find((b) => b.id === selectedBook.id)
     setSelectedBook(updatedBook)
     setSelectedReceipt(newReceipt)
@@ -162,7 +224,6 @@ export default function Home() {
     background: 'transparent', color: C.text,
     fontFamily: 'Courier New, monospace', outline: 'none',
   }
-
   const btnOutline = {
     width: '100%', padding: 12, fontSize: 10, letterSpacing: '0.18em',
     textTransform: 'uppercase', cursor: 'pointer',
@@ -170,12 +231,19 @@ export default function Home() {
     background: 'transparent', color: C.text,
     fontFamily: 'Courier New, monospace',
   }
-
   const btnSolid = {
     width: '100%', padding: 12, fontSize: 10, letterSpacing: '0.18em',
     textTransform: 'uppercase', cursor: 'pointer',
     border: 'none', background: C.text, color: C.bg,
     fontFamily: 'Courier New, monospace',
+  }
+
+  if (loading) {
+    return (
+      <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ fontSize: 10, letterSpacing: '0.2em', color: C.muted, textTransform: 'uppercase' }}>LOADING...</div>
+      </div>
+    )
   }
 
   // ── LIBRARY ──
@@ -186,7 +254,6 @@ export default function Home() {
           <div style={{ fontSize: 9, letterSpacing: '0.22em', color: C.muted, textTransform: 'uppercase' }}>MY LIBRARY</div>
           <div style={{ fontSize: 10, color: C.muted, letterSpacing: '0.1em' }}>{books.length}권</div>
         </div>
-
         <div style={{ background: C.bgShelf }}>
           <div style={{ display: 'flex', gap: 3, overflowX: 'auto', padding: '32px 20px 28px', alignItems: 'flex-end', scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
             {books.map((b) => {
@@ -200,55 +267,29 @@ export default function Home() {
                   onClick={() => { setSelectedBook(b); setView('detail') }}
                   style={{
                     width: w, height: b.h || 230, background: b.bg,
-                    padding: '12px 11px', borderRight: `3px solid rgba(0,0,0,0.07)`,
+                    padding: '12px 11px', borderRight: '3px solid rgba(0,0,0,0.07)',
                     display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
                     cursor: 'pointer', flexShrink: 0,
                     transition: 'transform 0.2s ease, box-shadow 0.2s ease',
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-12px)'
-                    e.currentTarget.style.boxShadow = '0 10px 24px rgba(0,0,0,0.12)'
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)'
-                    e.currentTarget.style.boxShadow = 'none'
-                  }}
+                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-12px)'; e.currentTarget.style.boxShadow = '0 10px 24px rgba(0,0,0,0.12)' }}
+                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
                 >
                   <div style={{ fontSize: 8, letterSpacing: '0.05em', color: tc, opacity: 0.7, wordBreak: 'keep-all', fontFamily: 'Courier New, monospace' }}>{b.author}</div>
                   <div>
-                    {b.receipts.length > 0 && (
-                      <div style={{ width: 4, height: 4, borderRadius: '50%', background: tc, opacity: 0.5, marginBottom: 8 }} />
-                    )}
-                    {mode === 'v' ? (
-                      <div style={{ writingMode: 'vertical-rl', fontSize: 12, fontWeight: fp.fw, color: tc, fontFamily: fp.f, lineHeight: `${w - 10}px` }}>
-                        {b.title}
-                      </div>
-                    ) : (
-                      <div style={{ fontSize: 11, fontWeight: fp.fw, color: tc, fontFamily: fp.f, lineHeight: 1.25, wordBreak: 'keep-all' }}>
-                        {b.title}
-                      </div>
-                    )}
+                    {b.receipts.length > 0 && <div style={{ width: 4, height: 4, borderRadius: '50%', background: tc, opacity: 0.5, marginBottom: 8 }} />}
+                    {mode === 'v'
+                      ? <div style={{ writingMode: 'vertical-rl', fontSize: 12, fontWeight: fp.fw, color: tc, fontFamily: fp.f, lineHeight: `${w - 10}px` }}>{b.title}</div>
+                      : <div style={{ fontSize: 11, fontWeight: fp.fw, color: tc, fontFamily: fp.f, lineHeight: 1.25, wordBreak: 'keep-all' }}>{b.title}</div>
+                    }
                   </div>
                 </div>
               )
             })}
-
-            <div
-              onClick={() => setView('search')}
-              style={{
-                width: 44, height: 150,
-                border: `1px dashed ${C.borderMid}`,
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                cursor: 'pointer', flexShrink: 0,
-                color: C.muted, fontSize: 20,
-              }}
-            >+</div>
+            <div onClick={() => setView('search')} style={{ width: 44, height: 150, border: `1px dashed ${C.borderMid}`, display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', flexShrink: 0, color: C.muted, fontSize: 20 }}>+</div>
           </div>
-          <div style={{ fontSize: 8, letterSpacing: '0.14em', color: C.faint, textAlign: 'center', paddingBottom: 14 }}>
-            — 스크롤 —
-          </div>
+          <div style={{ fontSize: 8, letterSpacing: '0.14em', color: C.faint, textAlign: 'center', paddingBottom: 14 }}>— 스크롤 —</div>
         </div>
-
         {books.length === 0 && (
           <div style={{ textAlign: 'center', padding: '40px 20px', color: C.muted, fontSize: 11, letterSpacing: '0.1em', lineHeight: 2 }}>
             <div>아직 책이 없어요</div>
@@ -266,29 +307,15 @@ export default function Home() {
         <NavBar onBack={() => setView('library')} title="책 추가" right="" />
         <div style={{ padding: 20 }}>
           <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
-            <input
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              placeholder="책 제목 또는 저자..."
-              style={{ ...inputStyle, flex: 1 }}
-            />
-            <button onClick={handleSearch} style={{ ...btnSolid, width: 'auto', padding: '0 16px' }}>
-              {searching ? '...' : '검색'}
-            </button>
+            <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearch()} placeholder="책 제목 또는 저자..." style={{ ...inputStyle, flex: 1 }} />
+            <button onClick={handleSearch} style={{ ...btnSolid, width: 'auto', padding: '0 16px' }}>{searching ? '...' : '검색'}</button>
           </div>
-
           {searchResults.map((book, i) => (
-            <div
-              key={i}
-              onClick={() => addBook(book)}
-              style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: `0.5px solid ${C.border}`, cursor: 'pointer' }}
-            >
-              {book.thumbnail ? (
-                <img src={book.thumbnail} alt={book.title} style={{ width: 44, height: 60, objectFit: 'cover', flexShrink: 0 }} />
-              ) : (
-                <div style={{ width: 44, height: 60, background: '#E8E4DC', flexShrink: 0 }} />
-              )}
+            <div key={i} onClick={() => addBook(book)} style={{ display: 'flex', gap: 12, padding: '12px 0', borderBottom: `0.5px solid ${C.border}`, cursor: 'pointer' }}>
+              {book.thumbnail
+                ? <img src={book.thumbnail} alt={book.title} style={{ width: 44, height: 60, objectFit: 'cover', flexShrink: 0 }} />
+                : <div style={{ width: 44, height: 60, background: '#E8E4DC', flexShrink: 0 }} />
+              }
               <div>
                 <div style={{ fontSize: 13, color: C.text, marginBottom: 4, lineHeight: 1.3 }}>{book.title}</div>
                 <div style={{ fontSize: 10, color: C.muted }}>{book.authors?.join(', ')} · {book.publisher}</div>
@@ -308,11 +335,10 @@ export default function Home() {
       <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg }}>
         <NavBar onBack={() => setView('library')} title="BOOK" right={`영수증 ${rc}`} />
         <div style={{ display: 'flex', gap: 16, padding: 20, borderBottom: `0.5px solid ${C.border}` }}>
-          {b.thumbnail ? (
-            <img src={b.thumbnail} alt={b.title} style={{ width: 64, height: 88, objectFit: 'cover', flexShrink: 0 }} />
-          ) : (
-            <div style={{ width: 64, height: 88, background: b.bg, borderRight: '3px solid rgba(0,0,0,0.08)', flexShrink: 0 }} />
-          )}
+          {b.thumbnail
+            ? <img src={b.thumbnail} alt={b.title} style={{ width: 64, height: 88, objectFit: 'cover', flexShrink: 0 }} />
+            : <div style={{ width: 64, height: 88, background: b.bg, borderRight: '3px solid rgba(0,0,0,0.08)', flexShrink: 0 }} />
+          }
           <div>
             <div style={{ fontSize: 16, fontWeight: 500, color: C.text, marginBottom: 5, lineHeight: 1.3 }}>{b.title}</div>
             <div style={{ fontSize: 11, color: C.muted, marginBottom: 2 }}>{b.author}</div>
@@ -320,32 +346,23 @@ export default function Home() {
             <div style={{ fontSize: 9, letterSpacing: '0.1em', color: C.faint }}>READ · {b.readDate}</div>
           </div>
         </div>
-
         <div style={{ padding: '16px 20px', borderBottom: `0.5px solid ${C.border}` }}>
-          <button onClick={() => { setNickname(''); setQuotes([{ text: '', page: '' }]); setView('form') }} style={btnSolid}>
-            영수증 발급하기 →
-          </button>
+          <button onClick={() => { setNickname(''); setQuotes([{ text: '', page: '' }]); setView('form') }} style={btnSolid}>영수증 발급하기 →</button>
         </div>
-
         <div style={{ padding: 20 }}>
           <div style={{ fontSize: 9, letterSpacing: '0.18em', color: C.muted, textTransform: 'uppercase', marginBottom: 12 }}>발급된 영수증</div>
-          {rc === 0 ? (
-            <div style={{ fontSize: 11, color: C.muted, textAlign: 'center', padding: '16px 0' }}>아직 없어요</div>
-          ) : (
-            b.receipts.map((r, i) => (
-              <div
-                key={r.id}
-                onClick={() => { setSelectedReceipt(r); setView('receipt') }}
-                style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: `0.5px solid ${C.border}`, cursor: 'pointer' }}
-              >
-                <div>
-                  <div style={{ fontSize: 11, color: C.text, marginBottom: 2 }}>ORDER #{String(i + 1).padStart(4, '0')} · {r.nickname}</div>
-                  <div style={{ fontSize: 9, color: C.muted }}>{r.date} · {r.quotes.length}개의 문장</div>
+          {rc === 0
+            ? <div style={{ fontSize: 11, color: C.muted, textAlign: 'center', padding: '16px 0' }}>아직 없어요</div>
+            : b.receipts.map((r, i) => (
+                <div key={r.id} onClick={() => { setSelectedReceipt(r); setView('receipt') }} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 0', borderBottom: `0.5px solid ${C.border}`, cursor: 'pointer' }}>
+                  <div>
+                    <div style={{ fontSize: 11, color: C.text, marginBottom: 2 }}>ORDER #{String(i + 1).padStart(4, '0')} · {r.nickname}</div>
+                    <div style={{ fontSize: 9, color: C.muted }}>{r.date} · {r.quotes.length}개의 문장</div>
+                  </div>
+                  <span style={{ fontSize: 11, color: C.muted }}>→</span>
                 </div>
-                <span style={{ fontSize: 11, color: C.muted }}>→</span>
-              </div>
-            ))
-          )}
+              ))
+          }
         </div>
       </div>
     )
@@ -374,14 +391,10 @@ export default function Home() {
             <div key={i} style={{ background: '#EDE9E2', padding: 12, borderRadius: 3, marginBottom: 9 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 7 }}>
                 <span style={{ fontSize: 9, color: C.muted }}>#{String(i + 1).padStart(2, '0')}</span>
-                {quotes.length > 1 && (
-                  <span style={{ fontSize: 9, cursor: 'pointer', color: C.muted }} onClick={() => setQuotes(quotes.filter((_, idx) => idx !== i))}>삭제</span>
-                )}
+                {quotes.length > 1 && <span style={{ fontSize: 9, cursor: 'pointer', color: C.muted }} onClick={() => setQuotes(quotes.filter((_, idx) => idx !== i))}>삭제</span>}
               </div>
-              <textarea value={q.text} onChange={(e) => { const u = [...quotes]; u[i].text = e.target.value; setQuotes(u) }}
-                placeholder="명대사를 입력하세요" style={{ ...inputStyle, height: 58, resize: 'none', marginBottom: 5 }} />
-              <input value={q.page} onChange={(e) => { const u = [...quotes]; u[i].page = e.target.value; setQuotes(u) }}
-                placeholder="페이지 번호 (예: 42)" style={inputStyle} />
+              <textarea value={q.text} onChange={(e) => { const u = [...quotes]; u[i].text = e.target.value; setQuotes(u) }} placeholder="명대사를 입력하세요" style={{ ...inputStyle, height: 58, resize: 'none', marginBottom: 5 }} />
+              <input value={q.page} onChange={(e) => { const u = [...quotes]; u[i].page = e.target.value; setQuotes(u) }} placeholder="페이지 번호 (예: 42)" style={inputStyle} />
             </div>
           ))}
           <button onClick={() => setQuotes([...quotes, { text: '', page: '' }])} style={{ ...btnOutline, marginBottom: 8 }}>+ 명대사 추가</button>
@@ -420,12 +433,8 @@ export default function Home() {
               </div>
             ))}
             <Divider />
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, lineHeight: 2.1, color: '#1A1A1A' }}>
-              <span>ITEM COUNT</span><span>{r.quotes.length}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontWeight: 600, color: '#1A1A1A' }}>
-              <span>TOTAL</span><span>{r.quotes.length}개의 문장</span>
-            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, lineHeight: 2.1, color: '#1A1A1A' }}><span>ITEM COUNT</span><span>{r.quotes.length}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, fontWeight: 600, color: '#1A1A1A' }}><span>TOTAL</span><span>{r.quotes.length}개의 문장</span></div>
             <Divider />
             <div style={{ fontSize: 11, lineHeight: 2.2, color: '#1A1A1A' }}>
               <div>CARD #: {cardNum}</div>
