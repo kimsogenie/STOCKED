@@ -8,7 +8,11 @@ const FONT_PAIRS = [
 ]
 
 const SPINE_COLORS = [
-  '#EDE8E0', '#E0E8E4', '#E8E4DC', '#E4DFE8', '#DCE4E8',
+  { bg: '#F4F1E2', text: '#513229' },
+  { bg: '#D8EBF9', text: '#2C4A5A' },
+  { bg: '#FCE6B7', text: '#6B4A10' },
+  { bg: '#D7D4B1', text: '#3A3820' },
+  { bg: '#513229', text: '#F4F1E2' },
 ]
 
 const C = {
@@ -100,6 +104,7 @@ export default function Home() {
   }
 
   const addBook = (kakaoBook) => {
+    const colorSet = SPINE_COLORS[books.length % SPINE_COLORS.length]
     const newBook = {
       id: Date.now(),
       title: kakaoBook.title,
@@ -109,7 +114,8 @@ export default function Home() {
       readDate: new Date().toLocaleDateString('ko-KR').replace(/\. /g, '.').slice(0, -1),
       pages: 250,
       h: 200 + Math.floor(Math.random() * 60),
-      bg: SPINE_COLORS[books.length % SPINE_COLORS.length],
+      bg: colorSet.bg,
+      spineText: colorSet.text,
       fp: books.length % FONT_PAIRS.length,
       receipts: [],
     }
@@ -187,13 +193,14 @@ export default function Home() {
               const w = getSpineWidth(b.pages)
               const mode = getTitleMode(b.title, w)
               const fp = FONT_PAIRS[b.fp]
+              const tc = b.spineText || '#1A1A1A'
               return (
                 <div
                   key={b.id}
                   onClick={() => { setSelectedBook(b); setView('detail') }}
                   style={{
                     width: w, height: b.h || 230, background: b.bg,
-                    padding: '12px 11px', borderRight: '3px solid rgba(0,0,0,0.07)',
+                    padding: '12px 11px', borderRight: `3px solid rgba(0,0,0,0.07)`,
                     display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
                     cursor: 'pointer', flexShrink: 0,
                     transition: 'transform 0.2s ease, box-shadow 0.2s ease',
@@ -207,17 +214,17 @@ export default function Home() {
                     e.currentTarget.style.boxShadow = 'none'
                   }}
                 >
-                  <div style={{ fontSize: 8, letterSpacing: '0.05em', color: '#888', wordBreak: 'keep-all', fontFamily: 'Courier New, monospace' }}>{b.author}</div>
+                  <div style={{ fontSize: 8, letterSpacing: '0.05em', color: tc, opacity: 0.7, wordBreak: 'keep-all', fontFamily: 'Courier New, monospace' }}>{b.author}</div>
                   <div>
                     {b.receipts.length > 0 && (
-                      <div style={{ width: 4, height: 4, borderRadius: '50%', background: '#555', marginBottom: 8 }} />
+                      <div style={{ width: 4, height: 4, borderRadius: '50%', background: tc, opacity: 0.5, marginBottom: 8 }} />
                     )}
                     {mode === 'v' ? (
-                      <div style={{ writingMode: 'vertical-rl', fontSize: 12, fontWeight: fp.fw, color: '#1A1A1A', fontFamily: fp.f, lineHeight: `${w - 10}px` }}>
+                      <div style={{ writingMode: 'vertical-rl', fontSize: 12, fontWeight: fp.fw, color: tc, fontFamily: fp.f, lineHeight: `${w - 10}px` }}>
                         {b.title}
                       </div>
                     ) : (
-                      <div style={{ fontSize: 11, fontWeight: fp.fw, color: '#1A1A1A', fontFamily: fp.f, lineHeight: 1.25, wordBreak: 'keep-all' }}>
+                      <div style={{ fontSize: 11, fontWeight: fp.fw, color: tc, fontFamily: fp.f, lineHeight: 1.25, wordBreak: 'keep-all' }}>
                         {b.title}
                       </div>
                     )}
