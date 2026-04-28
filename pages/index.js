@@ -316,19 +316,6 @@ export default function Home() {
     setView('library')
   }
 
-  const deleteBook = async (bookId) => {
-    if (!window.confirm('이 책을 서재에서 삭제할까요?')) return
-    const updated = books.filter((b) => b.id !== bookId)
-    if (isGuest) {
-      setBooks(updated)
-      localStorage.setItem('stocked_books', JSON.stringify(updated))
-    } else {
-      await supabase.from('books').delete().eq('id', bookId)
-      setBooks(updated)
-    }
-    setView('library')
-  }
-
   const loginWithGoogle = async () => {
     await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } })
   }
