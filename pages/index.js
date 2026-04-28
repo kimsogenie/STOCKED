@@ -79,9 +79,16 @@ function BookSpine({ b, onClick }) {
   const w = getSpineWidth(b.pages)
   const fp = FONT_PAIRS[b.fp % FONT_PAIRS.length]
   const tc = b.spineText || '#1A1A1A'
+
+  // JS로 글자 수 직접 제한 - CSS 클리핑 의존 안 함
+  const titleAreaH = SPINE_H - 26
   const titleLen = (b.title || '').length
   const fontSize = titleLen > 14 ? 9 : titleLen > 10 ? 10 : 11
-  const titleAreaH = SPINE_H - 22
+  const charH = fontSize * 1.3
+  const maxChars = Math.floor(titleAreaH / charH)
+  const displayTitle = b.title.length > maxChars
+    ? b.title.slice(0, maxChars - 1) + '…'
+    : b.title
 
   return (
     <div
@@ -91,13 +98,15 @@ function BookSpine({ b, onClick }) {
         height: SPINE_H,
         background: b.bg,
         borderRight: '2px solid rgba(0,0,0,0.06)',
-        display: 'block',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
         cursor: 'pointer',
         flexShrink: 0,
         overflow: 'hidden',
         boxSizing: 'border-box',
         transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-        padding: '6px 4px 4px',
+        paddingTop: 6,
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = 'translateY(-8px)'
@@ -114,31 +123,24 @@ function BookSpine({ b, onClick }) {
         fontFamily: C.font, lineHeight: 1.2,
         overflow: 'hidden', whiteSpace: 'nowrap',
         textOverflow: 'ellipsis', width: '100%',
-        textAlign: 'center', marginBottom: 4,
+        textAlign: 'center', marginBottom: 4, flexShrink: 0,
       }}>
         {b.author}
       </div>
 
-      {/* 제목 - 단순하고 확실한 클리핑 */}
+      {/* 제목 - JS로 잘린 텍스트, 세로 쓰기 */}
       <div style={{
-        width: w - 8,
+        writingMode: 'vertical-rl',
+        fontSize: fontSize,
+        fontWeight: fp.fw,
+        color: tc,
+        fontFamily: fp.f,
+        lineHeight: `${w - 8}px`,
+        flexShrink: 0,
         height: titleAreaH,
         overflow: 'hidden',
-        display: 'block',
       }}>
-        <div style={{
-          writingMode: 'vertical-rl',
-          fontSize: fontSize,
-          fontWeight: fp.fw,
-          color: tc,
-          fontFamily: fp.f,
-          whiteSpace: 'nowrap',
-          height: '100%',
-          overflow: 'hidden',
-          lineHeight: `${w - 8}px`,
-        }}>
-          {b.receipts && b.receipts.length > 0 ? '● ' : ''}{b.title}
-        </div>
+        {b.receipts && b.receipts.length > 0 ? '●' : ''}{displayTitle}
       </div>
     </div>
   )
