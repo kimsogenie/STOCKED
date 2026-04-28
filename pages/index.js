@@ -77,16 +77,16 @@ function Divider() {
 
 function getSpineTitle(title) {
   const clean = title || ''
-  // 책등 높이가 150px이므로, 세로 쓰기 시 12~14자 정도가 적당합니다.
-  const MAX = 14 
+  // 세로 높이 제한을 위해 글자 수를 조금 더 엄격하게 제한(12자)
+  const MAX = 12 
   if (clean.length <= MAX) return clean
   return clean.slice(0, MAX) + '…'
 }
 
 function getFontSize(title) {
   const len = (title || '').length
-  if (len > 12) return 9
-  if (len > 8) return 10
+  if (len > 10) return 9
+  if (len > 6) return 10
   return 11
 }
 
@@ -104,11 +104,9 @@ function BookSpine({ b, onClick }) {
         width: w,
         height: SPINE_H,
         background: b.bg,
-        padding: '8px 4px',
         borderRight: '2px solid rgba(0,0,0,0.06)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center', // 수평 중앙 정렬 추가
+        display: 'grid', // Grid로 변경하여 영역을 강제 제어
+        gridTemplateRows: '30px 1fr', // 상단 저자 30px, 나머지 제목 영역
         cursor: 'pointer',
         flexShrink: 0,
         overflow: 'hidden',
@@ -132,44 +130,45 @@ function BookSpine({ b, onClick }) {
           color: tc,
           opacity: 0.6,
           fontFamily: C.font,
-          lineHeight: 1.2,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '0 4px',
           overflow: 'hidden',
           whiteSpace: 'nowrap',
           textOverflow: 'ellipsis',
-          width: '100%',
-          textAlign: 'center',
-          marginBottom: 8,
-          flexShrink: 0,
         }}
       >
         {b.author}
       </div>
 
-      {/* 제목 영역: 높이를 고정하여 이 밖으로 못 나가게 막음 */}
+      {/* 제목 영역: overflow: hidden과 고정 높이를 강력하게 적용 */}
       <div
         style={{
-          width: '100%',
-          height: '110px', // SPINE_H(150)에서 여백 뺀 고정 높이
+          position: 'relative',
+          height: '100%',
+          maxHeight: '110px', // 물리적 높이 상한선
           display: 'flex',
           justifyContent: 'center',
-          alignItems: 'flex-start', // 위에서부터 텍스트 시작
-          overflow: 'hidden', // 넘치면 숨김
+          alignItems: 'flex-start',
+          overflow: 'hidden', // 여기서 무조건 잘라냄
+          padding: '0 4px 10px',
         }}
       >
         <div
           style={{
             writingMode: 'vertical-rl',
             textOrientation: 'mixed',
-            whiteSpace: 'normal', // 줄바꿈 허용
-            wordBreak: 'break-all', // 글자 단위 줄바꿈
-            maxHeight: '100%', // 부모(110px)를 넘지 않음
-            textAlign: 'left', // 세로쓰기에서는 위쪽 정렬
+            whiteSpace: 'normal', 
+            wordBreak: 'break-all', 
+            maxHeight: '100%', 
+            textAlign: 'left',
 
             fontSize,
             fontWeight: fp.fw,
             color: tc,
             fontFamily: fp.f,
-            lineHeight: 1.2,
+            lineHeight: 1.1,
             letterSpacing: '-0.02em',
           }}
           title={b.title}
