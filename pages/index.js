@@ -75,10 +75,9 @@ function Divider() {
   return <div style={{ borderTop: `1px dashed ${C.border}`, margin: '12px 0' }} />
 }
 
-// 책 한 권 spine 컴포넌트
 function getSpineTitle(title) {
   const clean = title || ''
-  const MAX = 10
+  const MAX = 14 // 글자 제한을 약간 늘렸습니다.
 
   if (clean.length <= MAX) return clean
   return clean.slice(0, MAX) + '…'
@@ -105,7 +104,7 @@ function BookSpine({ b, onClick }) {
         width: w,
         height: SPINE_H,
         background: b.bg,
-        padding: '8px 6px',
+        padding: '8px 4px', // 좌우 패딩을 살짝 줄여 공간 확보
         borderRight: '2px solid rgba(0,0,0,0.06)',
         display: 'flex',
         flexDirection: 'column',
@@ -138,6 +137,7 @@ function BookSpine({ b, onClick }) {
           width: '100%',
           flexShrink: 0,
           marginBottom: 6,
+          textAlign: 'center'
         }}
       >
         {b.author}
@@ -158,14 +158,16 @@ function BookSpine({ b, onClick }) {
           style={{
             writingMode: 'vertical-rl',
             textOrientation: 'mixed',
-            whiteSpace: 'nowrap',
-            overflow: 'hidden',
+            whiteSpace: 'normal', // 줄바꿈 허용
+            wordBreak: 'break-all', // 글자 단위 줄바꿈
+            maxHeight: '100%', // 높이 제한
+            textAlign: 'center',
 
             fontSize,
             fontWeight: fp.fw,
             color: tc,
             fontFamily: fp.f,
-            lineHeight: 1.15,
+            lineHeight: 1.1, // 줄 간격 살짝 조정
             letterSpacing: '-0.03em',
           }}
           title={b.title}
@@ -177,14 +179,11 @@ function BookSpine({ b, onClick }) {
   )
 }
 
-// 3단 책장 컴포넌트
 function BookShelf({ books, onBookClick, onAddClick }) {
-  // books를 BOOKS_PER_ROW씩 끊어서 rows 만들기
   const rows = []
   for (let i = 0; i < SHELF_ROWS; i++) {
     rows.push(books.slice(i * BOOKS_PER_ROW, (i + 1) * BOOKS_PER_ROW))
   }
-  // SHELF_ROWS 이후 책들은 마지막 row에 추가
   const extra = books.slice(SHELF_ROWS * BOOKS_PER_ROW)
 
   return (
@@ -209,7 +208,6 @@ function BookShelf({ books, onBookClick, onAddClick }) {
               {rowBooks.map((b) => (
                 <BookSpine key={b.id} b={b} onClick={() => onBookClick(b)} />
               ))}
-              {/* + 버튼은 마지막 row에만 */}
               {isLast && (
                 <div
                   onClick={onAddClick}
@@ -426,7 +424,6 @@ export default function Home() {
     border: 'none', background: C.text, color: C.bg, fontFamily: C.font,
   }
 
-  // ── 로그인 화면 ──
   if (!user && !isGuest && !loading) {
     return (
       <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg, display: 'flex', flexDirection: 'column' }}>
@@ -463,7 +460,6 @@ export default function Home() {
     )
   }
 
-  // ── LIBRARY ──
   if (view === 'library') {
     return (
       <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg }}>
@@ -504,7 +500,6 @@ export default function Home() {
     )
   }
 
-  // ── SEARCH ──
   if (view === 'search') {
     return (
       <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg }}>
@@ -528,7 +523,6 @@ export default function Home() {
     )
   }
 
-  // ── DETAIL ──
   if (view === 'detail' && selectedBook) {
     const b = selectedBook
     const rc = b.receipts.length
@@ -566,7 +560,6 @@ export default function Home() {
     )
   }
 
-  // ── FORM ──
   if (view === 'form' && selectedBook) {
     const b = selectedBook
     return (
@@ -602,7 +595,6 @@ export default function Home() {
     )
   }
 
-  // ── RECEIPT ──
   if (view === 'receipt' && selectedBook && selectedReceipt) {
     const b = selectedBook, r = selectedReceipt
     const idx = b.receipts.findIndex((x) => x.id === r.id)
