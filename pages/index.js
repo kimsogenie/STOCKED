@@ -76,19 +76,18 @@ function Divider() {
 }
 
 // 책 한 권 spine 컴포넌트
-function getFontSize(title, width) {
-  const len = title.length
-  if (len > 25) return 8
-  if (len > 18) return 9
-  if (len > 12) return 10
-  return 11
+function getSpineTitle(title) {
+  const clean = title || ''
+  const MAX = 10
+
+  if (clean.length <= MAX) return clean
+  return clean.slice(0, MAX) + '…'
 }
 
 function getFontSize(title) {
   const len = (title || '').length
-  if (len > 28) return 8
-  if (len > 20) return 9
-  if (len > 14) return 10
+  if (len > 25) return 9
+  if (len > 16) return 10
   return 11
 }
 
@@ -96,8 +95,8 @@ function BookSpine({ b, onClick }) {
   const w = getSpineWidth(b.pages)
   const fp = FONT_PAIRS[b.fp % FONT_PAIRS.length]
   const tc = b.spineText || '#1A1A1A'
-  const titleH = SPINE_H - 32
-  const fontSize = getFontSize(b.title)
+  const displayTitle = getSpineTitle(b.title)
+  const fontSize = getFontSize(displayTitle)
 
   return (
     <div
@@ -147,11 +146,11 @@ function BookSpine({ b, onClick }) {
       <div
         style={{
           width: '100%',
-          height: titleH,
+          height: SPINE_H - 32,
           overflow: 'hidden',
           display: 'flex',
           justifyContent: 'center',
-          alignItems: 'flex-start',
+          alignItems: 'center',
           boxSizing: 'border-box',
         }}
       >
@@ -160,9 +159,6 @@ function BookSpine({ b, onClick }) {
             writingMode: 'vertical-rl',
             textOrientation: 'mixed',
             whiteSpace: 'nowrap',
-
-            height: titleH,
-            maxHeight: titleH,
             overflow: 'hidden',
 
             fontSize,
@@ -170,10 +166,11 @@ function BookSpine({ b, onClick }) {
             color: tc,
             fontFamily: fp.f,
             lineHeight: 1.15,
-            letterSpacing: '-0.02em',
+            letterSpacing: '-0.03em',
           }}
+          title={b.title}
         >
-          {b.title}
+          {displayTitle}
         </div>
       </div>
     </div>
