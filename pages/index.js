@@ -291,6 +291,19 @@ export default function Home() {
     }
   }
 
+  const deleteBook = async (bookId) => {
+    if (!window.confirm('이 책을 서재에서 삭제할까요?')) return
+    const updated = books.filter((b) => b.id !== bookId)
+    if (isGuest) {
+      setBooks(updated)
+      localStorage.setItem('stocked_books', JSON.stringify(updated))
+    } else {
+      await supabase.from('books').delete().eq('id', bookId)
+      setBooks(updated)
+    }
+    setView('library')
+  }
+
   const loginWithGoogle = async () => {
     await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } })
   }
@@ -444,7 +457,7 @@ export default function Home() {
           </div>
         )}
         <div style={{ textAlign: 'center', padding: '24px 20px', fontSize: 10, color: C.faint, fontFamily: C.mono, letterSpacing: '0.1em' }}>
-          © kimsogenie · v.0.99
+          © kimsogenie · v.0.99.1
         </div>
       </div>
     )
@@ -491,7 +504,8 @@ export default function Home() {
           </div>
         </div>
         <div style={{ padding: '16px 20px', borderBottom: `0.5px solid ${C.border}` }}>
-          <button onClick={() => { setNickname(''); setQuotes([{ text: '', page: '' }]); setView('form') }} style={btnSolid}>영수증 발급하기 →</button>
+          <button onClick={() => { setNickname(''); setQuotes([{ text: '', page: '' }]); setView('form') }} style={{ ...btnSolid, marginBottom: 8 }}>영수증 발급하기 →</button>
+          <button onClick={() => deleteBook(b.id)} style={{ ...btnOutline, fontSize: 12, color: 'rgba(180,50,50,0.7)', borderColor: 'rgba(180,50,50,0.25)' }}>서재에서 삭제</button>
         </div>
         <div style={{ padding: 20 }}>
           <div style={{ fontSize: 10, letterSpacing: '0.14em', color: C.muted, textTransform: 'uppercase', marginBottom: 14, fontFamily: C.mono }}>발급된 영수증</div>
