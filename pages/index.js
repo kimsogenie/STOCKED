@@ -7,10 +7,11 @@ const supabase = createClient(
 )
 
 const FONT_PAIRS = [
-  { f: "Georgia, 'Times New Roman', serif", fw: '700' },
-  { f: "'Pretendard', sans-serif", fw: '600' },
+  { f: "'Playfair Display', Georgia, serif", fw: '700' },
+  { f: "'Space Mono', 'Courier New', monospace", fw: '700' },
+  { f: "'Bebas Neue', Arial, sans-serif", fw: '400' },
+  { f: "'DM Serif Display', Georgia, serif", fw: '400' },
   { f: "'Pretendard', sans-serif", fw: '800' },
-  { f: "Georgia, serif", fw: '700' },
 ]
 
 const SPINE_COLORS = [
