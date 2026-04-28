@@ -441,8 +441,8 @@ export default function Home() {
                   <div>
                     {b.receipts.length > 0 && <div style={{ width: 3, height: 3, borderRadius: '50%', background: tc, opacity: 0.5, marginBottom: 6 }} />}
                     {mode === 'v'
-                      ? <div style={{ writingMode: 'vertical-rl', fontSize: isMobile ? 10 : 12, fontWeight: fp.fw, color: tc, fontFamily: fp.f, lineHeight: `${w - 8}px`, overflow: 'hidden' }}>{b.title}</div>
-                      : <div style={{ fontSize: isMobile ? 9 : 11, fontWeight: fp.fw, color: tc, fontFamily: fp.f, lineHeight: 1.3, wordBreak: 'keep-all' }}>{b.title}</div>
+                      ? <div style={{ writingMode: 'vertical-rl', fontSize: isMobile ? 9 : 11, fontWeight: fp.fw, color: tc, fontFamily: fp.f, lineHeight: `${w - 6}px`, overflow: 'hidden', maxHeight: spineH - 36 }}>{b.title}</div>
+                      : <div style={{ fontSize: isMobile ? 8 : 10, fontWeight: fp.fw, color: tc, fontFamily: fp.f, lineHeight: 1.3, wordBreak: 'keep-all', overflow: 'hidden' }}>{b.title}</div>
                     }
                   </div>
                 </div>
@@ -464,6 +464,9 @@ export default function Home() {
             <div style={{ fontSize: 12, color: C.faint, marginTop: 4 }}>+ 를 눌러 첫 번째 책을 추가해보세요</div>
           </div>
         )}
+        <div style={{ textAlign: 'center', padding: '24px 20px', fontSize: 10, color: C.faint, fontFamily: C.mono, letterSpacing: '0.1em' }}>
+          © kimsogenie · v.0.99
+        </div>
       </div>
     )
   }
