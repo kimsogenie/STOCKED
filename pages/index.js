@@ -76,11 +76,21 @@ function Divider() {
 }
 
 // 책 한 권 spine 컴포넌트
+function getFontSize(title, width) {
+  const len = title.length
+  if (len > 25) return 8
+  if (len > 18) return 9
+  if (len > 12) return 10
+  return 11
+}
+
 function BookSpine({ b, onClick }) {
   const w = getSpineWidth(b.pages)
   const fp = FONT_PAIRS[b.fp % FONT_PAIRS.length]
   const tc = b.spineText || '#1A1A1A'
   const titleH = SPINE_H - 28
+
+  const fontSize = getFontSize(b.title, w)
 
   return (
     <div
@@ -89,54 +99,51 @@ function BookSpine({ b, onClick }) {
         width: w,
         height: SPINE_H,
         background: b.bg,
-        padding: '8px 6px 8px',
+        padding: '8px 6px',
         borderRight: '2px solid rgba(0,0,0,0.06)',
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'flex-start',
         cursor: 'pointer',
         flexShrink: 0,
         overflow: 'hidden',
-        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
         position: 'relative',
         boxSizing: 'border-box',
       }}
-      onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-8px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.14)' }}
-      onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
     >
       {/* 저자 */}
       <div style={{
-        fontSize: 7, color: tc, opacity: 0.6,
-        fontFamily: C.font, lineHeight: 1.2,
-        overflow: 'hidden', whiteSpace: 'nowrap',
-        textOverflow: 'ellipsis', width: '100%',
-        flexShrink: 0, marginBottom: 4,
+        fontSize: 7,
+        color: tc,
+        opacity: 0.6,
+        whiteSpace: 'nowrap',
+        overflow: 'hidden',
+        textOverflow: 'ellipsis',
+        marginBottom: 4,
       }}>
         {b.author}
       </div>
 
-      {/* 제목: rotate로 세로 표현 - Safari overflow 이슈 우회 */}
+      {/* 제목 */}
       <div style={{
         position: 'relative',
         width: w - 12,
         height: titleH,
         overflow: 'hidden',
-        flexShrink: 0,
       }}>
-        {b.receipts && b.receipts.length > 0 && (
-          <div style={{ width: 3, height: 3, borderRadius: '50%', background: tc, opacity: 0.5, marginBottom: 4 }} />
-        )}
         <div style={{
           position: 'absolute',
           bottom: 0,
           left: '50%',
           transformOrigin: 'bottom center',
           transform: 'rotate(-90deg) translateX(50%)',
-          whiteSpace: 'nowrap',
-          fontSize: 11,
+
+          fontSize,
           fontWeight: fp.fw,
           color: tc,
           fontFamily: fp.f,
+
+          whiteSpace: 'nowrap',
+
           maxWidth: titleH,
           overflow: 'hidden',
           textOverflow: 'ellipsis',
