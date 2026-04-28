@@ -80,6 +80,7 @@ function BookSpine({ b, onClick }) {
   const w = getSpineWidth(b.pages)
   const fp = FONT_PAIRS[b.fp % FONT_PAIRS.length]
   const tc = b.spineText || '#1A1A1A'
+  const titleH = SPINE_H - 28
 
   return (
     <div
@@ -88,16 +89,17 @@ function BookSpine({ b, onClick }) {
         width: w,
         height: SPINE_H,
         background: b.bg,
-        padding: '8px 6px',
+        padding: '8px 6px 8px',
         borderRight: '2px solid rgba(0,0,0,0.06)',
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'space-between',
+        alignItems: 'flex-start',
         cursor: 'pointer',
         flexShrink: 0,
         overflow: 'hidden',
         transition: 'transform 0.2s ease, box-shadow 0.2s ease',
         position: 'relative',
+        boxSizing: 'border-box',
       }}
       onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-8px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.14)' }}
       onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
@@ -107,27 +109,37 @@ function BookSpine({ b, onClick }) {
         fontSize: 7, color: tc, opacity: 0.6,
         fontFamily: C.font, lineHeight: 1.2,
         overflow: 'hidden', whiteSpace: 'nowrap',
-        textOverflow: 'ellipsis', flexShrink: 0,
+        textOverflow: 'ellipsis', width: '100%',
+        flexShrink: 0, marginBottom: 4,
       }}>
         {b.author}
       </div>
 
-      {/* 제목 영역 */}
-      <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column', justifyContent: 'flex-end' }}>
+      {/* 제목: rotate로 세로 표현 - Safari overflow 이슈 우회 */}
+      <div style={{
+        position: 'relative',
+        width: w - 12,
+        height: titleH,
+        overflow: 'hidden',
+        flexShrink: 0,
+      }}>
         {b.receipts && b.receipts.length > 0 && (
-          <div style={{ width: 3, height: 3, borderRadius: '50%', background: tc, opacity: 0.5, marginBottom: 5, flexShrink: 0 }} />
+          <div style={{ width: 3, height: 3, borderRadius: '50%', background: tc, opacity: 0.5, marginBottom: 4 }} />
         )}
-        {/* 세로 텍스트 - 고정 높이 컨테이너로 overflow 완전 차단 */}
         <div style={{
-          writingMode: 'vertical-rl',
+          position: 'absolute',
+          bottom: 0,
+          left: '50%',
+          transformOrigin: 'bottom center',
+          transform: 'rotate(-90deg) translateX(50%)',
+          whiteSpace: 'nowrap',
           fontSize: 11,
           fontWeight: fp.fw,
           color: tc,
           fontFamily: fp.f,
-          lineHeight: `${w - 4}px`,
+          maxWidth: titleH,
           overflow: 'hidden',
-          height: SPINE_H - 32,
-          wordBreak: 'keep-all',
+          textOverflow: 'ellipsis',
         }}>
           {b.title}
         </div>
@@ -304,6 +316,19 @@ export default function Home() {
     setView('library')
   }
 
+  const deleteBook = async (bookId) => {
+    if (!window.confirm('이 책을 서재에서 삭제할까요?')) return
+    const updated = books.filter((b) => b.id !== bookId)
+    if (isGuest) {
+      setBooks(updated)
+      localStorage.setItem('stocked_books', JSON.stringify(updated))
+    } else {
+      await supabase.from('books').delete().eq('id', bookId)
+      setBooks(updated)
+    }
+    setView('library')
+  }
+
   const loginWithGoogle = async () => {
     await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } })
   }
@@ -457,7 +482,7 @@ export default function Home() {
           </div>
         )}
         <div style={{ textAlign: 'center', padding: '24px 20px', fontSize: 10, color: C.faint, fontFamily: C.mono, letterSpacing: '0.1em' }}>
-          © kimsogenie · v.0.99.1
+          © kimsogenie · v.0.99.1.1
         </div>
       </div>
     )
