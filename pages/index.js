@@ -410,52 +410,74 @@ export default function Home() {
         )}
 
         <div style={{ background: C.bgShelf }}>
-          <div style={{
-            display: 'flex', gap: isMobile ? 2 : 3,
-            overflowX: 'auto', overflowY: 'hidden',
-            padding: isMobile ? '28px 16px 20px' : '40px 20px 32px',
-            alignItems: 'flex-end', height: shelfH,
-            scrollbarWidth: 'none', msOverflowStyle: 'none',
-            WebkitOverflowScrolling: 'touch',
-          }}>
-            {books.map((b) => {
-              const w = getSpineWidth(b.pages, isMobile)
-              const mode = getTitleMode(b.title, w)
-              const fp = FONT_PAIRS[b.fp]
-              const tc = b.spineText || '#1A1A1A'
-              const spineH = Math.min(b.h || 180, shelfH - (isMobile ? 48 : 60))
-              return (
-                <div key={b.id} onClick={() => { setSelectedBook(b); setView('detail') }}
-                  style={{
-                    width: w, height: spineH, background: b.bg,
-                    padding: isMobile ? '10px 7px' : '12px 11px',
-                    borderRight: '2px solid rgba(0,0,0,0.06)',
-                    display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
-                    cursor: 'pointer', flexShrink: 0,
-                    transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-                  }}
-                  onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-10px)'; e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,0,0,0.12)' }}
-                  onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
-                >
-                  <div style={{ fontSize: isMobile ? 7 : 8, color: tc, opacity: 0.65, wordBreak: 'keep-all', fontFamily: C.font, lineHeight: 1.3 }}>{b.author}</div>
-                  <div>
-                    {b.receipts.length > 0 && <div style={{ width: 3, height: 3, borderRadius: '50%', background: tc, opacity: 0.5, marginBottom: 6 }} />}
-                    {mode === 'v'
-                      ? <div style={{ writingMode: 'vertical-rl', fontSize: Math.min(isMobile ? 10 : 12, Math.floor((spineH - 40) / b.title.replace(/\s/g,'').length * 1.1)), fontWeight: fp.fw, color: tc, fontFamily: fp.f, lineHeight: `${w - 6}px`, overflow: 'hidden' }}>{b.title}</div>
-                      : <div style={{ fontSize: isMobile ? 9 : 11, fontWeight: fp.fw, color: tc, fontFamily: fp.f, lineHeight: 1.3, wordBreak: 'keep-all', overflow: 'hidden', maxHeight: spineH - 40 }}>{b.title}</div>
-                    }
+          {/* 3단 책장 그리드 */}
+          {(() => {
+            const COLS = isMobile ? 6 : 8  // 한 줄에 꽂을 수 있는 최대 책 수
+            const ROWS = 3
+            const perShelf = COLS * ROWS
+            const allBooks = [...books]
+            // 3줄씩 묶어서 선반 렌더
+            const shelves = []
+            for (let r = 0; r < ROWS; r++) {
+              shelves.push(allBooks.slice(r * COLS, (r + 1) * COLS))
+            }
+            const overflow = allBooks.slice(ROWS * COLS)
+            const rowH = isMobile ? 160 : 200
+            return (
+              <div>
+                {shelves.map((row, ri) => (
+                  <div key={ri} style={{
+                    display: 'flex', gap: isMobile ? 2 : 3,
+                    overflowX: row.length >= COLS || (ri === ROWS - 1 && overflow.length > 0) ? 'auto' : 'visible',
+                    padding: isMobile ? '20px 16px 16px' : '28px 20px 20px',
+                    alignItems: 'flex-end', height: rowH + (isMobile ? 36 : 44),
+                    borderBottom: ri < ROWS - 1 ? `1px solid rgba(0,0,0,0.06)` : 'none',
+                    scrollbarWidth: 'none', msOverflowStyle: 'none',
+                    WebkitOverflowScrolling: 'touch',
+                    background: ri % 2 === 0 ? C.bgShelf : 'rgba(0,0,0,0.015)',
+                  }}>
+                    {[...row, ...(ri === ROWS - 1 ? overflow : [])].map((b) => {
+                      const w = getSpineWidth(b.pages, isMobile)
+                      const mode = getTitleMode(b.title, w)
+                      const fp = FONT_PAIRS[b.fp]
+                      const tc = b.spineText || '#1A1A1A'
+                      const spineH = rowH
+                      return (
+                        <div key={b.id} onClick={() => { setSelectedBook(b); setView('detail') }}
+                          style={{
+                            width: w, height: spineH, background: b.bg,
+                            padding: isMobile ? '8px 6px' : '10px 9px',
+                            borderRight: '2px solid rgba(0,0,0,0.06)',
+                            display: 'flex', flexDirection: 'column', justifyContent: 'space-between',
+                            cursor: 'pointer', flexShrink: 0,
+                            transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+                          }}
+                          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-8px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.12)' }}
+                          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = 'none' }}
+                        >
+                          <div style={{ fontSize: isMobile ? 7 : 8, color: tc, opacity: 0.65, wordBreak: 'keep-all', fontFamily: C.font, lineHeight: 1.3, overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{b.author}</div>
+                          <div style={{ overflow: 'hidden', flex: 1, display: 'flex', alignItems: 'flex-end' }}>
+                            {b.receipts.length > 0 && <div style={{ position: 'absolute', width: 3, height: 3, borderRadius: '50%', background: tc, opacity: 0.5, marginBottom: 6 }} />}
+                            <div style={{ writingMode: 'vertical-rl', fontSize: isMobile ? 10 : 12, fontWeight: fp.fw, color: tc, fontFamily: fp.f, lineHeight: `${w - 4}px`, overflow: 'hidden', maxHeight: spineH - 28, wordBreak: 'keep-all' }}>{b.title}</div>
+                          </div>
+                        </div>
+                      )
+                    })}
+                    {ri === ROWS - 1 && (
+                      <div onClick={() => setView('search')} style={{
+                        width: isMobile ? 30 : 40, height: isMobile ? 100 : 130,
+                        border: `1px dashed ${C.borderMid}`,
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        cursor: 'pointer', flexShrink: 0, color: C.muted, fontSize: isMobile ? 16 : 20,
+                        alignSelf: 'flex-end',
+                      }}>+</div>
+                    )}
                   </div>
-                </div>
-              )
-            })}
-            <div onClick={() => setView('search')} style={{
-              width: isMobile ? 32 : 44, height: isMobile ? 120 : 150,
-              border: `1px dashed ${C.borderMid}`,
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              cursor: 'pointer', flexShrink: 0, color: C.muted, fontSize: isMobile ? 16 : 20,
-            }}>+</div>
-          </div>
-          <div style={{ fontSize: 8, letterSpacing: '0.12em', color: C.faint, textAlign: 'center', paddingBottom: 14, fontFamily: C.mono }}>— 스크롤 —</div>
+                ))}
+              </div>
+            )
+          })()}
+          <div style={{ fontSize: 8, letterSpacing: '0.12em', color: C.faint, textAlign: 'center', paddingBottom: 12, fontFamily: C.mono }}>— 스크롤 —</div>
         </div>
 
         {books.length === 0 && (
