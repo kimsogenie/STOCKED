@@ -469,7 +469,7 @@ export default function Home() {
           </div>
         )}
         <div style={{ textAlign: 'center', padding: '24px 20px', fontSize: 10, color: C.faint, fontFamily: C.mono, letterSpacing: '0.1em' }}>
-          © kimsogenie · v.0.99.1.1
+          © kimsogenie · v.0.99.1
         </div>
       </div>
     )
