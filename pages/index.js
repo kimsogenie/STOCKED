@@ -79,10 +79,9 @@ function BookSpine({ b, onClick }) {
   const w = getSpineWidth(b.pages)
   const fp = FONT_PAIRS[b.fp % FONT_PAIRS.length]
   const tc = b.spineText || '#1A1A1A'
-  const titleAreaH = SPINE_H - 22
-  // 글자 수에 따라 폰트 크기 조정 (모두 titleAreaH 안에 들어오도록)
   const titleLen = (b.title || '').length
   const fontSize = titleLen > 14 ? 9 : titleLen > 10 ? 10 : 11
+  const titleAreaH = SPINE_H - 22
 
   return (
     <div
@@ -92,15 +91,13 @@ function BookSpine({ b, onClick }) {
         height: SPINE_H,
         background: b.bg,
         borderRight: '2px solid rgba(0,0,0,0.06)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
+        display: 'block',
         cursor: 'pointer',
         flexShrink: 0,
         overflow: 'hidden',
         boxSizing: 'border-box',
         transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-        paddingTop: 6,
+        padding: '6px 4px 4px',
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = 'translateY(-8px)'
@@ -117,40 +114,32 @@ function BookSpine({ b, onClick }) {
         fontFamily: C.font, lineHeight: 1.2,
         overflow: 'hidden', whiteSpace: 'nowrap',
         textOverflow: 'ellipsis', width: '100%',
-        textAlign: 'center', flexShrink: 0, paddingBottom: 4,
+        textAlign: 'center', marginBottom: 4,
       }}>
         {b.author}
       </div>
 
-      {/* 제목 - SVG로 완벽하게 클리핑 */}
-      <svg
-        width={w}
-        height={titleAreaH}
-        style={{ flexShrink: 0, overflow: 'hidden' }}
-      >
-        <defs>
-          <clipPath id={`clip-${b.id}`}>
-            <rect x="0" y="0" width={w} height={titleAreaH} />
-          </clipPath>
-        </defs>
-        {b.receipts && b.receipts.length > 0 && (
-          <circle cx={w / 2} cy={titleAreaH - 6} r={2} fill={tc} opacity={0.5} />
-        )}
-        <text
-          x={w / 2}
-          y={titleAreaH - 14}
-          textAnchor="middle"
-          dominantBaseline="auto"
-          fontSize={fontSize}
-          fontWeight={fp.fw}
-          fill={tc}
-          fontFamily={fp.f}
-          clipPath={`url(#clip-${b.id})`}
-          style={{ writingMode: 'vertical-rl', letterSpacing: '0.02em' }}
-        >
-          {b.title}
-        </text>
-      </svg>
+      {/* 제목 - 단순하고 확실한 클리핑 */}
+      <div style={{
+        width: w - 8,
+        height: titleAreaH,
+        overflow: 'hidden',
+        display: 'block',
+      }}>
+        <div style={{
+          writingMode: 'vertical-rl',
+          fontSize: fontSize,
+          fontWeight: fp.fw,
+          color: tc,
+          fontFamily: fp.f,
+          whiteSpace: 'nowrap',
+          height: '100%',
+          overflow: 'hidden',
+          lineHeight: `${w - 8}px`,
+        }}>
+          {b.receipts && b.receipts.length > 0 ? '● ' : ''}{b.title}
+        </div>
+      </div>
     </div>
   )
 }
@@ -470,7 +459,7 @@ export default function Home() {
           </div>
         )}
         <div style={{ textAlign: 'center', padding: '24px 20px', fontSize: 10, color: C.faint, fontFamily: C.mono, letterSpacing: '0.1em' }}>
-          © kimsogenie · v.0.99.1.1
+          © kimsogenie · v.0.99.1
         </div>
       </div>
     )
