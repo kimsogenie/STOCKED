@@ -77,16 +77,16 @@ function Divider() {
 
 function getSpineTitle(title) {
   const clean = title || ''
-  const MAX = 14 // 글자 제한을 약간 늘렸습니다.
-
+  // 책등 높이가 150px이므로, 세로 쓰기 시 12~14자 정도가 적당합니다.
+  const MAX = 14 
   if (clean.length <= MAX) return clean
   return clean.slice(0, MAX) + '…'
 }
 
 function getFontSize(title) {
   const len = (title || '').length
-  if (len > 25) return 9
-  if (len > 16) return 10
+  if (len > 12) return 9
+  if (len > 8) return 10
   return 11
 }
 
@@ -104,10 +104,11 @@ function BookSpine({ b, onClick }) {
         width: w,
         height: SPINE_H,
         background: b.bg,
-        padding: '8px 4px', // 좌우 패딩을 살짝 줄여 공간 확보
+        padding: '8px 4px',
         borderRight: '2px solid rgba(0,0,0,0.06)',
         display: 'flex',
         flexDirection: 'column',
+        alignItems: 'center', // 수평 중앙 정렬 추가
         cursor: 'pointer',
         flexShrink: 0,
         overflow: 'hidden',
@@ -124,6 +125,7 @@ function BookSpine({ b, onClick }) {
         e.currentTarget.style.boxShadow = 'none'
       }}
     >
+      {/* 저자 영역 */}
       <div
         style={{
           fontSize: 7,
@@ -135,23 +137,23 @@ function BookSpine({ b, onClick }) {
           whiteSpace: 'nowrap',
           textOverflow: 'ellipsis',
           width: '100%',
+          textAlign: 'center',
+          marginBottom: 8,
           flexShrink: 0,
-          marginBottom: 6,
-          textAlign: 'center'
         }}
       >
         {b.author}
       </div>
 
+      {/* 제목 영역: 높이를 고정하여 이 밖으로 못 나가게 막음 */}
       <div
         style={{
           width: '100%',
-          height: SPINE_H - 32,
-          overflow: 'hidden',
+          height: '110px', // SPINE_H(150)에서 여백 뺀 고정 높이
           display: 'flex',
           justifyContent: 'center',
-          alignItems: 'center',
-          boxSizing: 'border-box',
+          alignItems: 'flex-start', // 위에서부터 텍스트 시작
+          overflow: 'hidden', // 넘치면 숨김
         }}
       >
         <div
@@ -160,15 +162,15 @@ function BookSpine({ b, onClick }) {
             textOrientation: 'mixed',
             whiteSpace: 'normal', // 줄바꿈 허용
             wordBreak: 'break-all', // 글자 단위 줄바꿈
-            maxHeight: '100%', // 높이 제한
-            textAlign: 'center',
+            maxHeight: '100%', // 부모(110px)를 넘지 않음
+            textAlign: 'left', // 세로쓰기에서는 위쪽 정렬
 
             fontSize,
             fontWeight: fp.fw,
             color: tc,
             fontFamily: fp.f,
-            lineHeight: 1.1, // 줄 간격 살짝 조정
-            letterSpacing: '-0.03em',
+            lineHeight: 1.2,
+            letterSpacing: '-0.02em',
           }}
           title={b.title}
         >
