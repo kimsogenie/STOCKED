@@ -77,7 +77,6 @@ function Divider() {
 
 function getSpineTitle(title) {
   const clean = title || ''
-  // 세로 높이 제한을 위해 글자 수를 조금 더 엄격하게 제한(12자)
   const MAX = 12 
   if (clean.length <= MAX) return clean
   return clean.slice(0, MAX) + '…'
@@ -105,8 +104,7 @@ function BookSpine({ b, onClick }) {
         height: SPINE_H,
         background: b.bg,
         borderRight: '2px solid rgba(0,0,0,0.06)',
-        display: 'grid', // Grid로 변경하여 영역을 강제 제어
-        gridTemplateRows: '30px 1fr', // 상단 저자 30px, 나머지 제목 영역
+        display: 'block', // Flex 대신 Block으로 강제 물리 영역 확보
         cursor: 'pointer',
         flexShrink: 0,
         overflow: 'hidden',
@@ -123,9 +121,10 @@ function BookSpine({ b, onClick }) {
         e.currentTarget.style.boxShadow = 'none'
       }}
     >
-      {/* 저자 영역 */}
+      {/* 저자 영역: 고정 높이 */}
       <div
         style={{
+          height: '25px',
           fontSize: 7,
           color: tc,
           opacity: 0.6,
@@ -142,17 +141,16 @@ function BookSpine({ b, onClick }) {
         {b.author}
       </div>
 
-      {/* 제목 영역: overflow: hidden과 고정 높이를 강력하게 적용 */}
+      {/* 제목 영역: 부모의 남은 높이를 절대적으로 통제 */}
       <div
         style={{
-          position: 'relative',
-          height: '100%',
-          maxHeight: '110px', // 물리적 높이 상한선
+          height: '115px', // SPINE_H(150)에서 저자 영역과 패딩을 뺀 값
+          width: '100%',
+          overflow: 'hidden', // 뚫고 나가는 자식은 여기서 무조건 잘림
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'flex-start',
-          overflow: 'hidden', // 여기서 무조건 잘라냄
-          padding: '0 4px 10px',
+          paddingTop: '4px'
         }}
       >
         <div
@@ -161,7 +159,8 @@ function BookSpine({ b, onClick }) {
             textOrientation: 'mixed',
             whiteSpace: 'normal', 
             wordBreak: 'break-all', 
-            maxHeight: '100%', 
+            height: '100%', // 부모 높이(115px)를 절대 넘지 못함
+            maxHeight: '110px', 
             textAlign: 'left',
 
             fontSize,
@@ -171,7 +170,6 @@ function BookSpine({ b, onClick }) {
             lineHeight: 1.1,
             letterSpacing: '-0.02em',
           }}
-          title={b.title}
         >
           {displayTitle}
         </div>
