@@ -32,7 +32,7 @@ const C = {
   borderMid: 'rgba(0,0,0,0.2)',
   font: "'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif",
   mono: "'Courier New', Courier, monospace",
-  receipt: "'NeoDunggeunmo', 'Fixedsys', 'Courier New', monospace",
+  receipt: "'NeoDGM', 'Fixedsys', 'Courier New', monospace",
 }
 
 const ONBOARDING_STEPS = [
@@ -441,8 +441,8 @@ export default function Home() {
                   <div>
                     {b.receipts.length > 0 && <div style={{ width: 3, height: 3, borderRadius: '50%', background: tc, opacity: 0.5, marginBottom: 6 }} />}
                     {mode === 'v'
-                      ? <div style={{ writingMode: 'vertical-rl', fontSize: isMobile ? 9 : 11, fontWeight: fp.fw, color: tc, fontFamily: fp.f, lineHeight: `${w - 6}px`, overflow: 'hidden', maxHeight: spineH - 36 }}>{b.title}</div>
-                      : <div style={{ fontSize: isMobile ? 8 : 10, fontWeight: fp.fw, color: tc, fontFamily: fp.f, lineHeight: 1.3, wordBreak: 'keep-all', overflow: 'hidden' }}>{b.title}</div>
+                      ? <div style={{ writingMode: 'vertical-rl', fontSize: Math.min(isMobile ? 10 : 12, Math.floor((spineH - 40) / b.title.replace(/\s/g,'').length * 1.1)), fontWeight: fp.fw, color: tc, fontFamily: fp.f, lineHeight: `${w - 6}px`, overflow: 'hidden' }}>{b.title}</div>
+                      : <div style={{ fontSize: isMobile ? 9 : 11, fontWeight: fp.fw, color: tc, fontFamily: fp.f, lineHeight: 1.3, wordBreak: 'keep-all', overflow: 'hidden', maxHeight: spineH - 40 }}>{b.title}</div>
                     }
                   </div>
                 </div>
