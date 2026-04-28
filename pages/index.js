@@ -31,14 +31,14 @@ const C = {
   borderMid: 'rgba(0,0,0,0.2)',
   font: "'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif",
   mono: "'Courier New', Courier, monospace",
-  receipt: "'Nanum Gothic Coding', 'Courier New', monospace",
+  receipt: "'NeoDunggeunmo', 'Fixedsys', 'Courier New', monospace",
 }
 
 const ONBOARDING_STEPS = [
-  { icon: '📚', title: '책 추가하기', desc: '+ 버튼을 눌러 책을 검색하고\n내 서재에 꽂아보세요' },
-  { icon: '🧾', title: '명대사 영수증', desc: '책을 클릭하면 영수증 발급 버튼이 나와요\n기억하고 싶은 문장을 저장해보세요' },
-  { icon: '🖼️', title: '이미지 저장', desc: '완성된 영수증은\n이미지로 저장해 공유할 수 있어요' },
-  { icon: '☁️', title: '어디서든 내 서재', desc: '구글 로그인하면\n어느 기기에서든 내 서재가 보여요' },
+  { emoji: '📚', title: '책 추가하기', desc: '+ 버튼을 눌러 읽은 책을 검색하고 내 서재에 꽂아보세요.' },
+  { emoji: '🧾', title: '명대사 영수증', desc: '책을 클릭하면 영수증 발급 버튼이 나와요. 기억하고 싶은 문장을 골라 나만의 영수증을 만들어보세요.' },
+  { emoji: '💾', title: '이미지로 저장', desc: '완성된 영수증은 이미지로 저장해서 SNS에 공유할 수 있어요.' },
+  { emoji: '☁️', title: '어디서든 내 서재', desc: '구글 로그인하면 모든 기기에서 내 서재와 영수증을 볼 수 있어요.' },
 ]
 
 function getSpineWidth(pages, isMobile) {
@@ -93,32 +93,37 @@ function OnboardingModal({ onClose }) {
   return (
     <div style={{
       position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
-      display: 'flex', alignItems: 'center', justifyContent: 'center',
-      zIndex: 1000, padding: 24,
+      display: 'flex', alignItems: 'flex-end', justifyContent: 'center',
+      zIndex: 1000, padding: '0 0 0 0',
     }}>
       <div style={{
-        background: C.bg, borderRadius: 8, padding: '36px 28px',
-        maxWidth: 340, width: '100%', textAlign: 'center',
+        width: '100%', maxWidth: 480,
+        background: C.bg, borderRadius: '16px 16px 0 0',
+        padding: '32px 28px 40px',
       }}>
-        <div style={{ fontSize: 48, marginBottom: 20 }}>{current.icon}</div>
-        <div style={{ fontSize: 18, fontWeight: 700, color: C.text, marginBottom: 12, fontFamily: C.font }}>{current.title}</div>
-        <div style={{ fontSize: 14, color: C.muted, lineHeight: 1.8, fontFamily: C.font, whiteSpace: 'pre-line', marginBottom: 32 }}>{current.desc}</div>
-
-        {/* 점 인디케이터 */}
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 6, marginBottom: 28 }}>
+        {/* 스텝 인디케이터 */}
+        <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginBottom: 32 }}>
           {ONBOARDING_STEPS.map((_, i) => (
             <div key={i} style={{
-              width: i === step ? 16 : 6, height: 6, borderRadius: 3,
+              width: i === step ? 20 : 6, height: 6, borderRadius: 3,
               background: i === step ? C.text : C.border,
-              transition: 'all 0.2s',
+              transition: 'width 0.2s',
             }} />
           ))}
         </div>
 
+        {/* 콘텐츠 */}
+        <div style={{ textAlign: 'center', marginBottom: 40 }}>
+          <div style={{ fontSize: 48, marginBottom: 20 }}>{current.emoji}</div>
+          <div style={{ fontSize: 18, fontWeight: 700, color: C.text, marginBottom: 12, fontFamily: C.font }}>{current.title}</div>
+          <div style={{ fontSize: 14, color: C.muted, lineHeight: 1.7, fontFamily: C.font }}>{current.desc}</div>
+        </div>
+
+        {/* 버튼 */}
         <button
-          onClick={() => isLast ? onClose() : setStep(s => s + 1)}
+          onClick={() => isLast ? onClose() : setStep(step + 1)}
           style={{
-            width: '100%', padding: '14px 12px', fontSize: 13,
+            width: '100%', padding: '15px', fontSize: 14, fontWeight: 600,
             border: 'none', background: C.text, color: C.bg,
             fontFamily: C.font, cursor: 'pointer', borderRadius: 2,
           }}
@@ -128,9 +133,12 @@ function OnboardingModal({ onClose }) {
 
         {!isLast && (
           <button onClick={onClose} style={{
-            marginTop: 12, fontSize: 12, color: C.faint,
-            background: 'none', border: 'none', cursor: 'pointer', fontFamily: C.font,
-          }}>건너뛰기</button>
+            width: '100%', padding: '12px', fontSize: 13,
+            border: 'none', background: 'transparent', color: C.faint,
+            fontFamily: C.font, cursor: 'pointer', marginTop: 8,
+          }}>
+            건너뛰기
+          </button>
         )}
       </div>
     </div>
@@ -193,8 +201,8 @@ export default function Home() {
     if (!seen) setShowOnboarding(true)
   }
 
-  const closeOnboarding = () => {
-    localStorage.setItem('stocked_onboarding_seen', 'true')
+  const handleOnboardingClose = () => {
+    localStorage.setItem('stocked_onboarding_seen', '1')
     setShowOnboarding(false)
   }
 
@@ -215,15 +223,15 @@ export default function Home() {
     setBooks(updated)
     if (isGuest) {
       localStorage.setItem('stocked_books', JSON.stringify(updated))
-      return
-    }
-    for (const b of updated) {
-      await supabase.from('books').upsert({
-        id: b.id, user_id: user.id, title: b.title, author: b.author,
-        publisher: b.publisher, thumbnail: b.thumbnail, read_date: b.readDate,
-        pages: b.pages, h: b.h, bg: b.bg, spine_text: b.spineText,
-        fp: b.fp, receipts: b.receipts,
-      })
+    } else {
+      for (const b of updated) {
+        await supabase.from('books').upsert({
+          id: b.id, user_id: user.id, title: b.title, author: b.author,
+          publisher: b.publisher, thumbnail: b.thumbnail, read_date: b.readDate,
+          pages: b.pages, h: b.h, bg: b.bg, spine_text: b.spineText,
+          fp: b.fp, receipts: b.receipts,
+        })
+      }
     }
   }
 
@@ -234,7 +242,7 @@ export default function Home() {
     })
   }
 
-  const continueAsGuest = () => {
+  const enterAsGuest = () => {
     setIsGuest(true)
     const saved = localStorage.getItem('stocked_books')
     if (saved) setBooks(JSON.parse(saved))
@@ -309,12 +317,12 @@ export default function Home() {
     WebkitAppearance: 'none', borderRadius: 0,
   }
   const btnOutline = {
-    width: '100%', padding: '14px 12px', fontSize: 13, letterSpacing: '0.05em',
+    width: '100%', padding: '14px 12px', fontSize: 13,
     cursor: 'pointer', border: `0.5px solid ${C.borderMid}`,
     background: 'transparent', color: C.text, fontFamily: C.font,
   }
   const btnSolid = {
-    width: '100%', padding: '14px 12px', fontSize: 13, letterSpacing: '0.05em',
+    width: '100%', padding: '14px 12px', fontSize: 13,
     cursor: 'pointer', border: 'none',
     background: C.text, color: C.bg, fontFamily: C.font,
   }
@@ -324,34 +332,36 @@ export default function Home() {
     return (
       <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg, display: 'flex', flexDirection: 'column' }}>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 32px' }}>
-          <img src="/logo.png" alt="STOCKED" style={{ height: 40, marginBottom: 12, objectFit: 'contain' }} />
-          <div style={{ fontSize: 13, color: C.muted, fontFamily: C.font, marginBottom: 48, letterSpacing: '0.05em' }}>나의 책장 & 명대사 영수증</div>
+          <img src="/logo.png" alt="STOCKED" style={{ height: 40, marginBottom: 16, objectFit: 'contain' }} />
+          <div style={{ fontSize: 13, color: C.muted, marginBottom: 56, fontFamily: C.font, letterSpacing: '0.05em' }}>
+            나의 책장과 명대사 영수증
+          </div>
 
           {/* 구글 로그인 */}
           <div style={{ width: '100%', marginBottom: 10 }}>
             <button onClick={loginWithGoogle} style={{
-              ...btnSolid,
+              ...btnOutline,
               display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10,
             }}>
               <svg width="18" height="18" viewBox="0 0 18 18">
-                <path fill="#fff" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
-                <path fill="#fff" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
-                <path fill="#fff" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
-                <path fill="#fff" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
+                <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
+                <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
+                <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
+                <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
               </svg>
               Google로 로그인
             </button>
           </div>
 
-          {/* 비로그인 이용 */}
-          <div style={{ width: '100%' }}>
-            <button onClick={continueAsGuest} style={btnOutline}>
+          {/* 로그인 없이 이용 */}
+          <div style={{ width: '100%', marginBottom: 32 }}>
+            <button onClick={enterAsGuest} style={{ ...btnSolid }}>
               로그인 없이 이용하기
             </button>
           </div>
 
-          <div style={{ marginTop: 28, fontSize: 11, color: C.faint, textAlign: 'center', fontFamily: C.font, lineHeight: 1.9 }}>
-            로그인하면 어느 기기에서든<br />내 서재를 볼 수 있어요
+          <div style={{ fontSize: 12, color: C.faint, textAlign: 'center', fontFamily: C.font, lineHeight: 1.9 }}>
+            로그인하면 어느 기기에서든<br />내 서재를 계속 볼 수 있어요
           </div>
         </div>
       </div>
@@ -371,7 +381,7 @@ export default function Home() {
     const shelfH = isMobile ? 220 : 300
     return (
       <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg }}>
-        {showOnboarding && <OnboardingModal onClose={closeOnboarding} />}
+        {showOnboarding && <OnboardingModal onClose={handleOnboardingClose} />}
 
         <div style={{ padding: '20px 20px 16px', borderBottom: `0.5px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <img src="/logo.png" alt="STOCKED" style={{ height: isMobile ? 28 : 36, objectFit: 'contain' }} />
@@ -386,13 +396,15 @@ export default function Home() {
                 로그아웃
               </button>
             )}
+            <button onClick={() => setShowOnboarding(true)} style={{ fontSize: 16, color: C.muted, background: 'none', border: 'none', cursor: 'pointer', lineHeight: 1 }}>?</button>
           </div>
         </div>
 
         {isGuest && (
-          <div style={{ padding: '10px 20px', background: '#FFF8E7', borderBottom: `0.5px solid #F0E0A0`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <span style={{ fontSize: 11, color: '#8B6914', fontFamily: C.font }}>로그인하면 기기 간 동기화가 돼요</span>
-            <button onClick={loginWithGoogle} style={{ fontSize: 11, color: '#8B6914', background: 'none', border: 'none', cursor: 'pointer', fontFamily: C.font, fontWeight: 600 }}>로그인 →</button>
+          <div style={{ padding: '10px 20px', background: '#FCE6B7', borderBottom: `0.5px solid ${C.border}` }}>
+            <div style={{ fontSize: 12, color: '#6B4A10', fontFamily: C.font, textAlign: 'center' }}>
+              현재 기기에만 저장돼요 · <span style={{ textDecoration: 'underline', cursor: 'pointer' }} onClick={loginWithGoogle}>로그인하면 어디서든 볼 수 있어요</span>
+            </div>
           </div>
         )}
 
