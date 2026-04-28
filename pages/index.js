@@ -77,15 +77,15 @@ function Divider() {
 
 function getSpineTitle(title) {
   const clean = title || ''
-  const MAX = 12 
+  const MAX = 14 
   if (clean.length <= MAX) return clean
   return clean.slice(0, MAX) + '…'
 }
 
 function getFontSize(title) {
   const len = (title || '').length
-  if (len > 10) return 9
-  if (len > 6) return 10
+  if (len > 12) return 9
+  if (len > 8) return 10
   return 11
 }
 
@@ -104,7 +104,8 @@ function BookSpine({ b, onClick }) {
         height: SPINE_H,
         background: b.bg,
         borderRight: '2px solid rgba(0,0,0,0.06)',
-        display: 'block', // Flex 대신 Block으로 강제 물리 영역 확보
+        display: 'flex',
+        flexDirection: 'column',
         cursor: 'pointer',
         flexShrink: 0,
         overflow: 'hidden',
@@ -121,55 +122,60 @@ function BookSpine({ b, onClick }) {
         e.currentTarget.style.boxShadow = 'none'
       }}
     >
-      {/* 저자 영역: 고정 높이 */}
+      {/* 저자 영역 */}
       <div
         style={{
-          height: '25px',
           fontSize: 7,
           color: tc,
           opacity: 0.6,
           fontFamily: C.font,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '0 4px',
+          lineHeight: 1.2,
+          padding: '8px 2px 0',
           overflow: 'hidden',
           whiteSpace: 'nowrap',
           textOverflow: 'ellipsis',
+          textAlign: 'center',
+          flexShrink: 0,
         }}
       >
         {b.author}
       </div>
 
-      {/* 제목 영역: 부모의 남은 높이를 절대적으로 통제 */}
+      {/* 제목 영역: 회전 필살기 적용 */}
       <div
         style={{
-          height: '115px', // SPINE_H(150)에서 저자 영역과 패딩을 뺀 값
+          flex: 1,
           width: '100%',
-          overflow: 'hidden', // 뚫고 나가는 자식은 여기서 무조건 잘림
+          position: 'relative',
           display: 'flex',
           justifyContent: 'center',
-          alignItems: 'flex-start',
-          paddingTop: '4px'
+          alignItems: 'center',
+          overflow: 'hidden',
         }}
       >
         <div
           style={{
-            writingMode: 'vertical-rl',
-            textOrientation: 'mixed',
-            whiteSpace: 'normal', 
-            wordBreak: 'break-all', 
-            height: '100%', // 부모 높이(115px)를 절대 넘지 못함
-            maxHeight: '110px', 
-            textAlign: 'left',
-
+            // 가로로 쓴 뒤 회전시켜서 세로쓰기처럼 보이게 함
+            transform: 'rotate(90deg)',
+            whiteSpace: 'nowrap',
+            position: 'absolute',
+            
+            // 회전 시 기준점이 뒤틀리므로 너비를 SPINE_H 근처로 고정
+            width: '110px', 
+            textAlign: 'center',
+            
             fontSize,
             fontWeight: fp.fw,
             color: tc,
             fontFamily: fp.f,
-            lineHeight: 1.1,
+            lineHeight: 1,
             letterSpacing: '-0.02em',
+            
+            // 넘치는 글자 처리
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
           }}
+          title={b.title}
         >
           {displayTitle}
         </div>
