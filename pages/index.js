@@ -84,13 +84,20 @@ function getFontSize(title, width) {
   return 11
 }
 
+function getFontSize(title) {
+  const len = (title || '').length
+  if (len > 28) return 8
+  if (len > 20) return 9
+  if (len > 14) return 10
+  return 11
+}
+
 function BookSpine({ b, onClick }) {
   const w = getSpineWidth(b.pages)
   const fp = FONT_PAIRS[b.fp % FONT_PAIRS.length]
   const tc = b.spineText || '#1A1A1A'
-  const titleH = SPINE_H - 28
-
-  const fontSize = getFontSize(b.title, w)
+  const titleH = SPINE_H - 32
+  const fontSize = getFontSize(b.title)
 
   return (
     <div
@@ -108,46 +115,64 @@ function BookSpine({ b, onClick }) {
         overflow: 'hidden',
         position: 'relative',
         boxSizing: 'border-box',
+        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'translateY(-8px)'
+        e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.14)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'translateY(0)'
+        e.currentTarget.style.boxShadow = 'none'
       }}
     >
-      {/* 저자 */}
-      <div style={{
-        fontSize: 7,
-        color: tc,
-        opacity: 0.6,
-        whiteSpace: 'nowrap',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        marginBottom: 4,
-      }}>
+      <div
+        style={{
+          fontSize: 7,
+          color: tc,
+          opacity: 0.6,
+          fontFamily: C.font,
+          lineHeight: 1.2,
+          overflow: 'hidden',
+          whiteSpace: 'nowrap',
+          textOverflow: 'ellipsis',
+          width: '100%',
+          flexShrink: 0,
+          marginBottom: 6,
+        }}
+      >
         {b.author}
       </div>
 
-      {/* 제목 */}
-      <div style={{
-        position: 'relative',
-        width: w - 12,
-        height: titleH,
-        overflow: 'hidden',
-      }}>
-        <div style={{
-          position: 'absolute',
-          bottom: 0,
-          left: '50%',
-          transformOrigin: 'bottom center',
-          transform: 'rotate(-90deg) translateX(50%)',
-
-          fontSize,
-          fontWeight: fp.fw,
-          color: tc,
-          fontFamily: fp.f,
-
-          whiteSpace: 'nowrap',
-
-          maxWidth: titleH,
+      <div
+        style={{
+          width: '100%',
+          height: titleH,
           overflow: 'hidden',
-          textOverflow: 'ellipsis',
-        }}>
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'flex-start',
+          boxSizing: 'border-box',
+        }}
+      >
+        <div
+          style={{
+            writingMode: 'vertical-rl',
+            textOrientation: 'mixed',
+            whiteSpace: 'nowrap',
+
+            height: titleH,
+            maxHeight: titleH,
+            overflow: 'hidden',
+
+            fontSize,
+            fontWeight: fp.fw,
+            color: tc,
+            fontFamily: fp.f,
+            lineHeight: 1.15,
+            letterSpacing: '-0.02em',
+          }}
+        >
           {b.title}
         </div>
       </div>
