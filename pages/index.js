@@ -75,13 +75,26 @@ function Divider() {
   return <div style={{ borderTop: `1px dashed ${C.border}`, margin: '12px 0' }} />
 }
 
+function getSpineTitle(title) {
+  const clean = title || ''
+  const MAX = 10
+  if (clean.length <= MAX) return clean
+  return clean.slice(0, MAX) + '…'
+}
+
+function getFontSize(title) {
+  const len = (title || '').length
+  if (len > 12) return 9
+  if (len > 8) return 10
+  return 11
+}
+
 function BookSpine({ b, onClick }) {
   const w = getSpineWidth(b.pages)
   const fp = FONT_PAIRS[b.fp % FONT_PAIRS.length]
   const tc = b.spineText || '#1A1A1A'
-  const titleLen = (b.title || '').length
-  const fontSize = titleLen > 14 ? 9 : titleLen > 10 ? 10 : 11
-  const textMaxW = SPINE_H - 28
+  const displayTitle = getSpineTitle(b.title)
+  const fontSize = getFontSize(displayTitle)
 
   return (
     <div
@@ -89,13 +102,15 @@ function BookSpine({ b, onClick }) {
       style={{
         width: w,
         height: SPINE_H,
-        background: b.bg || '#F4F1E2',
+        background: b.bg,
         borderRight: '2px solid rgba(0,0,0,0.06)',
+        display: 'flex',
+        flexDirection: 'column',
         cursor: 'pointer',
         flexShrink: 0,
-        boxSizing: 'border-box',
+        overflow: 'hidden',
         position: 'relative',
-        clipPath: 'inset(0)',
+        boxSizing: 'border-box',
         transition: 'transform 0.2s ease, box-shadow 0.2s ease',
       }}
       onMouseEnter={(e) => {
@@ -107,36 +122,63 @@ function BookSpine({ b, onClick }) {
         e.currentTarget.style.boxShadow = 'none'
       }}
     >
-      {/* 저자 - 상단 */}
-      <div style={{
-        position: 'absolute', top: 6, left: 0, right: 0,
-        fontSize: 7, color: tc, opacity: 0.55,
-        fontFamily: C.font, lineHeight: 1.2,
-        overflow: 'hidden', whiteSpace: 'nowrap',
-        textOverflow: 'ellipsis', textAlign: 'center',
-        padding: '0 3px',
-      }}>
+      {/* 저자 영역 */}
+      <div
+        style={{
+          fontSize: 7,
+          color: tc,
+          opacity: 0.6,
+          fontFamily: C.font,
+          lineHeight: 1.2,
+          padding: '8px 2px 0',
+          overflow: 'hidden',
+          whiteSpace: 'nowrap',
+          textOverflow: 'ellipsis',
+          textAlign: 'center',
+          flexShrink: 0,
+        }}
+      >
         {b.author}
       </div>
 
-      {/* 제목 - rotate90 + clipPath로 완벽 클리핑 */}
-      <div style={{
-        position: 'absolute',
-        top: '50%',
-        left: '50%',
-        width: textMaxW,
-        transform: 'translate(-50%, -50%) rotate(90deg)',
-        fontSize: fontSize,
-        fontWeight: fp.fw,
-        color: tc,
-        fontFamily: fp.f,
-        whiteSpace: 'nowrap',
-        overflow: 'hidden',
-        textOverflow: 'ellipsis',
-        textAlign: 'center',
-        lineHeight: 1.2,
-      }}>
-        {b.receipts && b.receipts.length > 0 ? '● ' : ''}{b.title.length > 10 ? b.title.slice(0, 10) + '…' : b.title}
+      {/* 제목 영역: 회전 필살기 적용 */}
+      <div
+        style={{
+          flex: 1,
+          width: '100%',
+          position: 'relative',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          overflow: 'hidden',
+        }}
+      >
+        <div
+          style={{
+            // 가로로 쓴 뒤 회전시켜서 세로쓰기처럼 보이게 함
+            transform: 'rotate(90deg)',
+            whiteSpace: 'nowrap',
+            position: 'absolute',
+            
+            // 회전 시 기준점이 뒤틀리므로 너비를 SPINE_H 근처로 고정
+            width: '110px', 
+            textAlign: 'center',
+            
+            fontSize,
+            fontWeight: fp.fw,
+            color: tc,
+            fontFamily: fp.f,
+            lineHeight: 1,
+            letterSpacing: '-0.02em',
+            
+            // 넘치는 글자 처리
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+          }}
+          title={b.title}
+        >
+          {displayTitle}
+        </div>
       </div>
     </div>
   )
@@ -456,7 +498,7 @@ export default function Home() {
             <div style={{ fontSize: 12, color: C.faint, marginTop: 4 }}>+ 를 눌러 첫 번째 책을 추가해보세요</div>
           </div>
         )}
-        <div style={{ textAlign: 'center', padding: '24px 20px', fontSize: 10, color: C.faint, fontFamily: C.mono, letterSpacing: '0.1em' }}>
+        <div style={{ textAlign: 'center', padding: '24px 20px', fontSize: 12, color: C.muted, fontFamily: C.mono, letterSpacing: '0.1em' }}>
           © kimsogenie · v.0.99.1
         </div>
       </div>
