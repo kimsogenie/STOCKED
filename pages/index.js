@@ -136,7 +136,7 @@ function BookSpine({ b, onClick }) {
         textAlign: 'center',
         lineHeight: 1.2,
       }}>
-        {b.receipts && b.receipts.length > 0 ? '● ' : ''}{b.title}
+        {b.receipts && b.receipts.length > 0 ? '● ' : ''}{b.title.length > 10 ? b.title.slice(0, 10) + '…' : b.title}
       </div>
     </div>
   )
