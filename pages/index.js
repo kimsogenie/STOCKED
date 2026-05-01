@@ -50,11 +50,7 @@ function BookSpine({ b, onClick }) {
   const w = getSpineWidth(b.pages)
   const fp = FONT_PAIRS[b.fp % FONT_PAIRS.length]
   const tc = b.spineText || '#1A1A1A'
-
-  // 글자 하나씩 div로 쌓기 - 어떤 브라우저든 100% 잘림 보장
-  const MAX_CHARS = 10
-  const chars = (b.title || '').slice(0, MAX_CHARS)
-  const hasMore = (b.title || '').length > MAX_CHARS
+  const title = (b.title || '').slice(0, 10)
 
   return (
     <div
@@ -64,15 +60,12 @@ function BookSpine({ b, onClick }) {
         height: SPINE_H,
         background: b.bg,
         borderRight: '2px solid rgba(0,0,0,0.06)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
+        display: 'block',
         cursor: 'pointer',
         flexShrink: 0,
         overflow: 'hidden',
         boxSizing: 'border-box',
         transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-        padding: '6px 0 4px',
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = 'translateY(-8px)'
@@ -83,36 +76,28 @@ function BookSpine({ b, onClick }) {
         e.currentTarget.style.boxShadow = 'none'
       }}
     >
-      {/* 저자 */}
       <div style={{
         fontSize: 7, color: tc, opacity: 0.55,
-        fontFamily: C.font, lineHeight: 1,
+        fontFamily: C.font, lineHeight: 1.2,
+        padding: '6px 2px 2px',
         overflow: 'hidden', whiteSpace: 'nowrap',
-        textOverflow: 'ellipsis', width: '100%',
-        textAlign: 'center', marginBottom: 4, flexShrink: 0,
-        padding: '0 2px',
+        textOverflow: 'ellipsis', textAlign: 'center',
       }}>
         {b.author}
       </div>
-
-      {/* 영수증 점 */}
-      {b.receipts && b.receipts.length > 0 && (
-        <div style={{ width: 3, height: 3, borderRadius: '50%', background: tc, opacity: 0.4, marginBottom: 3, flexShrink: 0 }} />
-      )}
-
-      {/* 제목: 글자 하나씩 div로 쌓기 */}
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', overflow: 'hidden', flex: 1 }}>
-        {chars.split('').map((ch, i) => (
-          <div key={i} style={{
-            fontSize: 9,
-            fontWeight: fp.fw,
-            color: tc,
-            fontFamily: fp.f,
-            lineHeight: 1.15,
-            flexShrink: 0,
-          }}>{ch}</div>
-        ))}
-        {hasMore && <div style={{ fontSize: 9, color: tc, opacity: 0.5, lineHeight: 1 }}>…</div>}
+      <div style={{
+        writingMode: 'vertical-rl',
+        fontSize: 11,
+        fontWeight: fp.fw,
+        color: tc,
+        fontFamily: fp.f,
+        height: SPINE_H - 22,
+        overflow: 'hidden',
+        textAlign: 'center',
+        width: '100%',
+        boxSizing: 'border-box',
+      }}>
+        {b.receipts && b.receipts.length > 0 ? '●' : ''}{title}
       </div>
     </div>
   )
@@ -241,7 +226,6 @@ export default function Home() {
   const [books, setBooks] = useState([])
   const [user, setUser] = useState(null)
   const [isGuest, setIsGuest] = useState(false)
-  const [showGuestBanner, setShowGuestBanner] = useState(true)
   const [loading, setLoading] = useState(true)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [showGuestNotice, setShowGuestNotice] = useState(true)
