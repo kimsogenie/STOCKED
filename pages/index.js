@@ -45,6 +45,12 @@ function getSpineWidth(pages) {
   return Math.round(MIN_W + ((c - MIN_P) / (MAX_P - MIN_P)) * (MAX_W - MIN_W))
 }
 
+function getSpineTitle(title) {
+  const MAX = 10
+  if (!title) return ''
+  return title.length > MAX ? title.slice(0, MAX) + '…' : title
+}
+
 // [핵심 수정 1] 제목이 넘치지 않도록 코드 단에서 강제 컷팅 (안전장치)
 function BookSpine({ b, onClick }) {
   const w = getSpineWidth(b.pages)
@@ -101,7 +107,7 @@ function BookSpine({ b, onClick }) {
         height: '70px',
         maxHeight: '70px',
       }}>
-        {(b.title || '').slice(0, 8)}
+        {getSpineTitle(b.title)}
       </div>
     </div>
   )
@@ -470,7 +476,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.0.99.1
+          © kimsogenie · v.0.99.2
         </div>
       </div>
     )
