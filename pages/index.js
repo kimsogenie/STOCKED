@@ -104,7 +104,7 @@ function BookSpine({ b, onClick }) {
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', overflow: 'hidden', flex: 1 }}>
         {chars.split('').map((ch, i) => (
           <div key={i} style={{
-            fontSize: 11,
+            fontSize: 9,
             fontWeight: fp.fw,
             color: tc,
             fontFamily: fp.f,
