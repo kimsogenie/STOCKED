@@ -50,7 +50,12 @@ function BookSpine({ b, onClick }) {
   const w = getSpineWidth(b.pages)
   const fp = FONT_PAIRS[b.fp % FONT_PAIRS.length]
   const tc = b.spineText || '#1A1A1A'
-  const title = (b.title || '').slice(0, 10)
+  const CHAR_H = 13
+  const AUTHOR_H = 20
+  const DOT_H = b.receipts && b.receipts.length > 0 ? 10 : 0
+  const availH = SPINE_H - AUTHOR_H - DOT_H - 8
+  const maxChars = Math.floor(availH / CHAR_H)
+  const chars = (b.title || '').slice(0, maxChars)
 
   return (
     <div
@@ -60,9 +65,9 @@ function BookSpine({ b, onClick }) {
         height: SPINE_H,
         background: b.bg,
         borderRight: '2px solid rgba(0,0,0,0.06)',
-        display: 'block',
         cursor: 'pointer',
         flexShrink: 0,
+        position: 'relative',
         overflow: 'hidden',
         boxSizing: 'border-box',
         transition: 'transform 0.2s ease, box-shadow 0.2s ease',
@@ -76,29 +81,41 @@ function BookSpine({ b, onClick }) {
         e.currentTarget.style.boxShadow = 'none'
       }}
     >
+      {/* 저자 */}
       <div style={{
+        position: 'absolute', top: 5, left: 0, right: 0,
         fontSize: 7, color: tc, opacity: 0.55,
-        fontFamily: C.font, lineHeight: 1.2,
-        padding: '6px 2px 2px',
+        fontFamily: C.font, textAlign: 'center',
         overflow: 'hidden', whiteSpace: 'nowrap',
-        textOverflow: 'ellipsis', textAlign: 'center',
+        textOverflow: 'ellipsis', padding: '0 2px',
       }}>
         {b.author}
       </div>
-      <div style={{
-        writingMode: 'vertical-rl',
-        fontSize: 11,
-        fontWeight: fp.fw,
-        color: tc,
-        fontFamily: fp.f,
-        height: SPINE_H - 22,
-        overflow: 'hidden',
-        textAlign: 'center',
-        width: '100%',
-        boxSizing: 'border-box',
-      }}>
-        {b.receipts && b.receipts.length > 0 ? '●' : ''}{title}
-      </div>
+
+      {/* 영수증 점 */}
+      {b.receipts && b.receipts.length > 0 && (
+        <div style={{
+          position: 'absolute', top: AUTHOR_H, left: 0, right: 0,
+          textAlign: 'center', fontSize: 6, color: tc, opacity: 0.5,
+        }}>●</div>
+      )}
+
+      {/* 제목: 글자마다 절대위치 - overflow:hidden으로 100% 클리핑 */}
+      {chars.split('').map((ch, i) => (
+        <div key={i} style={{
+          position: 'absolute',
+          top: AUTHOR_H + DOT_H + i * CHAR_H,
+          left: 0, right: 0,
+          textAlign: 'center',
+          fontSize: 11,
+          fontWeight: fp.fw,
+          color: tc,
+          fontFamily: fp.f,
+          lineHeight: 1,
+        }}>
+          {ch}
+        </div>
+      ))}
     </div>
   )
 }
@@ -387,7 +404,7 @@ export default function Home() {
       <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg, display: 'flex', flexDirection: 'column' }}>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 32px' }}>
           <img src="/logo.png" alt="STOCKED" style={{ height: 40, marginBottom: 16, objectFit: 'contain' }} />
-          <div style={{ fontSize: 13, color: 'rgba(0,0,0,0.6)', marginBottom: 56, fontFamily: C.font, letterSpacing: '0.05em' }}>나의 책장과 명대사 영수증</div>
+          <div style={{ fontSize: 13, color: C.muted, marginBottom: 56, fontFamily: C.font, letterSpacing: '0.05em' }}>나의 책장과 명대사 영수증</div>
           <div style={{ width: '100%', marginBottom: 10 }}>
             <button onClick={loginWithGoogle} style={{ ...btnOutline, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
               Google로 로그인
@@ -465,7 +482,7 @@ export default function Home() {
           </div>
         )}
 
-        <div style={{ textAlign: 'center', padding: '24px 20px', fontSize: 13, color: 'rgba(0,0,0,0.6)', fontFamily: C.mono, letterSpacing: '0.08em' }}>
+        <div style={{ textAlign: 'center', padding: '24px 20px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
           © kimsogenie · v.0.99.1
         </div>
       </div>
@@ -505,8 +522,8 @@ export default function Home() {
           {b.thumbnail ? <img src={b.thumbnail} alt={b.title} style={{ width: 68, height: 94, objectFit: 'cover', flexShrink: 0, boxShadow: '2px 2px 8px rgba(0,0,0,0.12)' }} /> : <div style={{ width: 68, height: 94, background: b.bg, borderRight: '3px solid rgba(0,0,0,0.08)', flexShrink: 0 }} />}
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 17, fontWeight: 600, color: C.text, marginBottom: 6, lineHeight: 1.4, fontFamily: C.font }}>{b.title}</div>
-            <div style={{ fontSize: 13, color: 'rgba(0,0,0,0.6)', marginBottom: 2, fontFamily: C.font }}>{b.author}</div>
-            <div style={{ fontSize: 13, color: 'rgba(0,0,0,0.6)', marginBottom: 12, fontFamily: C.font }}>{b.publisher}</div>
+            <div style={{ fontSize: 13, color: C.muted, marginBottom: 2, fontFamily: C.font }}>{b.author}</div>
+            <div style={{ fontSize: 13, color: C.muted, marginBottom: 12, fontFamily: C.font }}>{b.publisher}</div>
             <div style={{ fontSize: 10, letterSpacing: '0.08em', color: C.faint, fontFamily: C.mono }}>READ · {b.readDate}</div>
           </div>
         </div>
