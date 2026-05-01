@@ -50,6 +50,7 @@ function BookSpine({ b, onClick }) {
   const w = getSpineWidth(b.pages)
   const fp = FONT_PAIRS[b.fp % FONT_PAIRS.length]
   const tc = b.spineText || '#1A1A1A'
+  const title = b.title || ''
 
   return (
     <div
@@ -61,13 +62,13 @@ function BookSpine({ b, onClick }) {
         borderRight: '2px solid rgba(0,0,0,0.06)',
         display: 'flex',
         flexDirection: 'column',
-        alignItems: 'center',
+        justifyContent: 'space-between',
         cursor: 'pointer',
         flexShrink: 0,
         overflow: 'hidden',
         boxSizing: 'border-box',
         transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-        padding: '6px 2px 4px',
+        padding: '6px 3px',
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = 'translateY(-8px)'
@@ -82,24 +83,24 @@ function BookSpine({ b, onClick }) {
         fontSize: 7, color: tc, opacity: 0.55,
         fontFamily: C.font, overflow: 'hidden',
         whiteSpace: 'nowrap', textOverflow: 'ellipsis',
-        width: '100%', textAlign: 'center', flexShrink: 0,
+        textAlign: 'center',
       }}>
         {b.author}
       </div>
       <div style={{
-        writingMode: 'vertical-rl',
-        fontSize: 10,
+        fontSize: 9,
         fontWeight: fp.fw,
         color: tc,
         fontFamily: fp.f,
-        lineHeight: `${w - 4}px`,
+        wordBreak: 'keep-all',
         overflow: 'hidden',
-        whiteSpace: 'nowrap',
-        textOverflow: 'ellipsis',
-        flex: 1,
-        maxHeight: SPINE_H - 20,
+        display: '-webkit-box',
+        WebkitLineClamp: 7,
+        WebkitBoxOrient: 'vertical',
+        textAlign: 'center',
+        lineHeight: 1.4,
       }}>
-        {(b.title || '').slice(0, 10)}
+        {title}
       </div>
     </div>
   )
