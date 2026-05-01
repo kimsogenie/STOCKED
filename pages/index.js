@@ -313,6 +313,7 @@ export default function Home() {
   const checkOnboarding = () => {
     if (!localStorage.getItem('stocked_onboarding_seen')) setShowOnboarding(true)
   }
+
   const handleOnboardingClose = () => {
     localStorage.setItem('stocked_onboarding_seen', '1')
     setShowOnboarding(false)
@@ -430,10 +431,12 @@ export default function Home() {
     border: `0.5px solid ${C.borderMid}`, background: 'transparent', color: C.text,
     fontFamily: C.font, outline: 'none', WebkitAppearance: 'none', borderRadius: 0,
   }
+
   const btnOutline = {
     width: '100%', padding: '14px 12px', fontSize: 13, cursor: 'pointer',
     border: `0.5px solid ${C.borderMid}`, background: 'transparent', color: C.text, fontFamily: C.font,
   }
+
   const btnSolid = {
     width: '100%', padding: '14px 12px', fontSize: 13, cursor: 'pointer',
     border: 'none', background: C.text, color: C.bg, fontFamily: C.font,
@@ -488,32 +491,53 @@ export default function Home() {
           </div>
         </div>
 
-       {isGuest && showGuestNotice && (
-  <div style={{ padding: '10px 44px 10px 20px', background: '#FCE6B7', borderBottom: `0.5px solid ${C.border}`, position: 'relative' }}>
-    <div style={{ fontSize: 12, color: '#6B4A10', fontFamily: C.font, textAlign: 'center' }}>
-      현재 기기에만 저장돼요 · <span style={{ textDecoration: 'underline', cursor: 'pointer' }} onClick={loginWithGoogle}>로그인하면 어디서든 볼 수 있어요</span>
-    </div>
-    <button
-      onClick={() => setShowGuestNotice(false)}
-      aria-label="안내 닫기"
-      style={{
-        position: 'absolute',
-        right: 14,
-        top: '50%',
-        transform: 'translateY(-50%)',
-        border: 'none',
-        background: 'transparent',
-        color: '#6B4A10',
-        fontSize: 16,
-        lineHeight: 1,
-        cursor: 'pointer',
-        fontFamily: C.font,
-      }}
-    >
-      ×
-    </button>
-  </div>
-)}
+        {isGuest && showGuestNotice && (
+          <div style={{ padding: '10px 44px 10px 20px', background: '#FCE6B7', borderBottom: `0.5px solid ${C.border}`, position: 'relative' }}>
+            <div style={{ fontSize: 12, color: '#6B4A10', fontFamily: C.font, textAlign: 'center' }}>
+              현재 기기에만 저장돼요 · <span style={{ textDecoration: 'underline', cursor: 'pointer' }} onClick={loginWithGoogle}>로그인하면 어디서든 볼 수 있어요</span>
+            </div>
+            <button
+              onClick={() => setShowGuestNotice(false)}
+              aria-label="안내 닫기"
+              style={{
+                position: 'absolute',
+                right: 14,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                border: 'none',
+                background: 'transparent',
+                color: '#6B4A10',
+                fontSize: 16,
+                lineHeight: 1,
+                cursor: 'pointer',
+                fontFamily: C.font,
+              }}
+            >
+              ×
+            </button>
+          </div>
+        )}
+
+        <BookShelf
+          books={books}
+          onBookClick={(b) => { setSelectedBook(b); setView('detail') }}
+          onAddClick={() => setView('search')}
+        />
+
+        {books.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '40px 20px', color: C.muted, fontSize: 14, lineHeight: 2, fontFamily: C.font }}>
+            <div>아직 책이 없어요</div>
+            <div style={{ fontSize: 12, color: C.faint, marginTop: 4 }}>+ 를 눌러 첫 번째 책을 추가해보세요</div>
+          </div>
+        )}
+
+        <div style={{ textAlign: 'center', padding: '24px 20px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
+          © kimsogenie · v.0.99.1
+        </div>
+      </div>
+    )
+  }
+
   if (view === 'search') {
     return (
       <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg }}>
