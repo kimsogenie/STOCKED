@@ -498,7 +498,7 @@ export default function Home() {
             <div style={{ fontSize: 12, color: C.faint, marginTop: 4 }}>+ 를 눌러 첫 번째 책을 추가해보세요</div>
           </div>
         )}
-        <div style={{ textAlign: 'center', padding: '24px 20px', fontSize: 12, color: C.muted, fontFamily: C.mono, letterSpacing: '0.1em' }}>
+        <div style={{ textAlign: 'center', padding: '24px 20px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
           © kimsogenie · v.0.99.1
         </div>
       </div>
