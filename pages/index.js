@@ -40,9 +40,127 @@ const SPINE_H = 150
 const SHELF_ROWS = 3
 
 function getSpineWidth(pages) {
-  const MIN_W = 36, MAX_W = 60, MIN_P = 100, MAX_P = 700
+  const MIN_W = 56, MAX_W = 78, MIN_P = 100, MAX_P = 700
   const c = Math.max(MIN_P, Math.min(MAX_P, pages || 250))
   return Math.round(MIN_W + ((c - MIN_P) / (MAX_P - MIN_P)) * (MAX_W - MIN_W))
+}
+
+function getSpineTitle(title) {
+  const clean = (title || '').replace(/\s+/g, '')
+  const MAX = 10
+  if (clean.length <= MAX) return clean
+  return clean.slice(0, MAX) + '…'
+}
+
+function getFontSize(title) {
+  const len = (title || '').length
+  if (len > 9) return 9
+  if (len > 6) return 10
+  return 11
+}
+
+function BookSpine({ b, onClick }) {
+  const w = getSpineWidth(b.pages)
+  const fp = FONT_PAIRS[b.fp % FONT_PAIRS.length]
+  const tc = b.spineText || '#1A1A1A'
+  const displayTitle = getSpineTitle(b.title)
+  const fontSize = getFontSize(displayTitle)
+
+  return (
+    <div
+      onClick={onClick}
+      style={{
+        width: w,
+        height: SPINE_H,
+        background: b.bg,
+        borderRight: '2px solid rgba(0,0,0,0.06)',
+        display: 'flex',
+        flexDirection: 'column',
+        cursor: 'pointer',
+        flexShrink: 0,
+        overflow: 'hidden',
+        position: 'relative',
+        boxSizing: 'border-box',
+        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'translateY(-8px)'
+        e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.14)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'translateY(0)'
+        e.currentTarget.style.boxShadow = 'none'
+      }}
+    >
+      <div
+        style={{
+          fontSize: 7,
+          color: tc,
+          opacity: 0.6,
+          fontFamily: C.font,
+          lineHeight: 1.2,
+          padding: '8px 4px 0',
+          overflow: 'hidden',
+          whiteSpace: 'nowrap',
+          textOverflow: 'ellipsis',
+          textAlign: 'center',
+          flexShrink: 0,
+        }}
+      >
+        {b.author}
+      </div>
+
+      <div
+        style={{
+          flex: 1,
+          minHeight: 0,
+          width: '100%',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          overflow: 'hidden',
+          padding: '6px 0 8px',
+          boxSizing: 'border-box',
+        }}
+      >
+        <div
+          title={b.title}
+          style={{
+            height: 112,
+            maxHeight: 112,
+            width: w - 12,
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 1,
+            fontSize,
+            fontWeight: fp.fw,
+            color: tc,
+            fontFamily: fp.f,
+            lineHeight: 1,
+            boxSizing: 'border-box',
+          }}
+        >
+          {displayTitle.split('').map((char, i) => (
+            <span
+              key={i}
+              style={{
+                display: 'block',
+                lineHeight: 1,
+                height: fontSize + 1,
+                maxHeight: fontSize + 1,
+                overflow: 'hidden',
+              }}
+            >
+              {char}
+            </span>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
 }
 
 function Barcode({ seed }) {
@@ -287,6 +405,7 @@ export default function Home() {
   const [isGuest, setIsGuest] = useState(false)
   const [loading, setLoading] = useState(true)
   const [showOnboarding, setShowOnboarding] = useState(false)
+  const [showGuestNotice, setShowGuestNotice] = useState(true)
   const [selectedBook, setSelectedBook] = useState(null)
   const [selectedReceipt, setSelectedReceipt] = useState(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -486,33 +605,32 @@ export default function Home() {
           </div>
         </div>
 
-        {isGuest && (
-          <div style={{ padding: '10px 20px', background: '#FCE6B7', borderBottom: `0.5px solid ${C.border}` }}>
-            <div style={{ fontSize: 12, color: '#6B4A10', fontFamily: C.font, textAlign: 'center' }}>
-              현재 기기에만 저장돼요 · <span style={{ textDecoration: 'underline', cursor: 'pointer' }} onClick={loginWithGoogle}>로그인하면 어디서든 볼 수 있어요</span>
-            </div>
-          </div>
-        )}
-
-        <BookShelf
-          books={books}
-          onBookClick={(b) => { setSelectedBook(b); setView('detail') }}
-          onAddClick={() => setView('search')}
-        />
-
-        {books.length === 0 && (
-          <div style={{ textAlign: 'center', padding: '40px 20px', color: C.muted, fontSize: 14, lineHeight: 2, fontFamily: C.font }}>
-            <div>아직 책이 없어요</div>
-            <div style={{ fontSize: 12, color: C.faint, marginTop: 4 }}>+ 를 눌러 첫 번째 책을 추가해보세요</div>
-          </div>
-        )}
-        <div style={{ textAlign: 'center', padding: '24px 20px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.0.99.1
-        </div>
-      </div>
-    )
-  }
-
+       {isGuest && showGuestNotice && (
+  <div style={{ padding: '10px 44px 10px 20px', background: '#FCE6B7', borderBottom: `0.5px solid ${C.border}`, position: 'relative' }}>
+    <div style={{ fontSize: 12, color: '#6B4A10', fontFamily: C.font, textAlign: 'center' }}>
+      현재 기기에만 저장돼요 · <span style={{ textDecoration: 'underline', cursor: 'pointer' }} onClick={loginWithGoogle}>로그인하면 어디서든 볼 수 있어요</span>
+    </div>
+    <button
+      onClick={() => setShowGuestNotice(false)}
+      aria-label="안내 닫기"
+      style={{
+        position: 'absolute',
+        right: 14,
+        top: '50%',
+        transform: 'translateY(-50%)',
+        border: 'none',
+        background: 'transparent',
+        color: '#6B4A10',
+        fontSize: 16,
+        lineHeight: 1,
+        cursor: 'pointer',
+        fontFamily: C.font,
+      }}
+    >
+      ×
+    </button>
+  </div>
+)}
   if (view === 'search') {
     return (
       <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg }}>
