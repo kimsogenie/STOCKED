@@ -50,7 +50,9 @@ function BookSpine({ b, onClick }) {
   const w = getSpineWidth(b.pages)
   const fp = FONT_PAIRS[b.fp % FONT_PAIRS.length]
   const tc = b.spineText || '#1A1A1A'
-  const title = b.title || ''
+  const title = (b.title || '').length > 10
+    ? (b.title || '').slice(0, 10) + '…'
+    : (b.title || '')
 
   return (
     <div
@@ -61,8 +63,6 @@ function BookSpine({ b, onClick }) {
         background: b.bg,
         borderRight: '2px solid rgba(0,0,0,0.06)',
         display: 'block',
-        flexDirection: 'column',
-        justifyContent: 'space-between',
         cursor: 'pointer',
         flexShrink: 0,
         overflow: 'hidden',
@@ -83,22 +83,21 @@ function BookSpine({ b, onClick }) {
         fontSize: 7, color: tc, opacity: 0.55,
         fontFamily: C.font, overflow: 'hidden',
         whiteSpace: 'nowrap', textOverflow: 'ellipsis',
-        textAlign: 'center',
+        textAlign: 'center', marginBottom: 4,
       }}>
         {b.author}
       </div>
       <div style={{
-        fontSize: 9,
+        writingMode: 'vertical-rl',
+        fontSize: 10,
         fontWeight: fp.fw,
         color: tc,
         fontFamily: fp.f,
-        wordBreak: 'keep-all',
+        height: SPINE_H - 22,
         overflow: 'hidden',
-        display: '-webkit-box',
-        WebkitLineClamp: 7,
-        WebkitBoxOrient: 'vertical',
-        textAlign: 'center',
-        lineHeight: 1.4,
+        whiteSpace: 'nowrap',
+        textOverflow: 'ellipsis',
+        lineHeight: `${w - 4}px`,
       }}>
         {title}
       </div>
@@ -124,7 +123,7 @@ function Barcode({ seed }) {
 
 function NavBar({ onBack, title, right }) {
   return (
-    <div style={{ , alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: `0.5px solid ${C.border}` }}>
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: `0.5px solid ${C.border}` }}>
       <span style={{ fontSize: 12, color: C.muted, cursor: 'pointer', fontFamily: C.font }} onClick={onBack}>← 뒤로</span>
       <span style={{ fontSize: 11, letterSpacing: '0.15em', color: C.text, textTransform: 'uppercase', fontFamily: C.mono }}>{title}</span>
       <span style={{ fontSize: 11, color: C.muted, minWidth: 40, textAlign: 'right', fontFamily: C.font }}>{right}</span>
@@ -151,7 +150,7 @@ function BookShelf({ books, onBookClick, onAddClick }) {
         return (
           <div key={ri} style={{ borderBottom: isLast ? 'none' : `1px solid rgba(0,0,0,0.07)` }}>
             <div style={{
-              ,
+              display: 'flex',
               gap: 2,
               overflowX: 'auto',
               overflowY: 'hidden',
@@ -171,7 +170,7 @@ function BookShelf({ books, onBookClick, onAddClick }) {
                   style={{
                     width: 32, height: SPINE_H,
                     border: `1px dashed ${C.borderMid}`,
-                    , alignItems: 'center', justifyContent: 'center',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
                     cursor: 'pointer', flexShrink: 0,
                     color: C.muted, fontSize: 18,
                     alignSelf: 'flex-end',
@@ -201,9 +200,9 @@ function OnboardingModal({ onClose }) {
   const current = ONBOARDING_STEPS[step]
   const isLast = step === ONBOARDING_STEPS.length - 1
   return (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', , alignItems: 'flex-end', justifyContent: 'center', zIndex: 1000 }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 1000 }}>
       <div style={{ width: '100%', maxWidth: 480, background: C.bg, borderRadius: '16px 16px 0 0', padding: '32px 28px 40px' }}>
-        <div style={{ , gap: 6, justifyContent: 'center', marginBottom: 32 }}>
+        <div style={{ display: 'flex', gap: 6, justifyContent: 'center', marginBottom: 32 }}>
           {ONBOARDING_STEPS.map((_, i) => (
             <div key={i} style={{ width: i === step ? 20 : 6, height: 6, borderRadius: 3, background: i === step ? C.text : C.border, transition: 'width 0.2s' }} />
           ))}
@@ -387,12 +386,12 @@ export default function Home() {
 
   if (!user && !isGuest && !loading) {
     return (
-      <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg, , flexDirection: 'column' }}>
-        <div style={{ flex: 1, , flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 32px' }}>
+      <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg, display: 'flex', flexDirection: 'column' }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 32px' }}>
           <img src="/logo.png" alt="STOCKED" style={{ height: 40, marginBottom: 16, objectFit: 'contain' }} />
           <div style={{ fontSize: 13, color: C.muted, marginBottom: 56, fontFamily: C.font, letterSpacing: '0.05em' }}>나의 책장과 명대사 영수증</div>
           <div style={{ width: '100%', marginBottom: 10 }}>
-            <button onClick={loginWithGoogle} style={{ ...btnOutline, , alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+            <button onClick={loginWithGoogle} style={{ ...btnOutline, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
               Google로 로그인
             </button>
           </div>
@@ -409,7 +408,7 @@ export default function Home() {
 
   if (loading) {
     return (
-      <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg, , alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ fontSize: 11, letterSpacing: '0.2em', color: C.muted, textTransform: 'uppercase', fontFamily: C.mono }}>LOADING...</div>
       </div>
     )
@@ -419,9 +418,9 @@ export default function Home() {
     return (
       <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg }}>
         {showOnboarding && <OnboardingModal onClose={handleOnboardingClose} />}
-        <div style={{ padding: '20px 20px 16px', borderBottom: `0.5px solid ${C.border}`, , alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ padding: '20px 20px 16px', borderBottom: `0.5px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <img src="/logo.png" alt="STOCKED" style={{ height: 28, objectFit: 'contain' }} />
-          <div style={{ , alignItems: 'center', gap: 12 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             {isGuest && <button onClick={loginWithGoogle} style={{ fontSize: 11, color: C.text, background: 'none', border: `0.5px solid ${C.borderMid}`, cursor: 'pointer', fontFamily: C.font, padding: '5px 10px' }}>로그인</button>}
             {!isGuest && <button onClick={logout} style={{ fontSize: 11, color: C.faint, background: 'none', border: 'none', cursor: 'pointer', fontFamily: C.font }}>로그아웃</button>}
             <button onClick={() => setShowOnboarding(true)} style={{ fontSize: 16, color: C.muted, background: 'none', border: 'none', cursor: 'pointer' }}>?</button>
@@ -480,12 +479,12 @@ export default function Home() {
       <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg }}>
         <NavBar onBack={() => setView('library')} title="책 추가" right="" />
         <div style={{ padding: 20 }}>
-          <div style={{ , gap: 8, marginBottom: 16 }}>
+          <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
             <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearch()} placeholder="책 제목 또는 저자..." style={{ ...inputStyle, flex: 1 }} />
             <button onClick={handleSearch} style={{ ...btnSolid, width: 'auto', padding: '0 18px' }}>{searching ? '...' : '검색'}</button>
           </div>
           {searchResults.map((book, i) => (
-            <div key={i} onClick={() => addBook(book)} style={{ , gap: 14, padding: '14px 0', borderBottom: `0.5px solid ${C.border}`, cursor: 'pointer' }}>
+            <div key={i} onClick={() => addBook(book)} style={{ display: 'flex', gap: 14, padding: '14px 0', borderBottom: `0.5px solid ${C.border}`, cursor: 'pointer' }}>
               {book.thumbnail ? <img src={book.thumbnail} alt={book.title} style={{ width: 48, height: 66, objectFit: 'cover', flexShrink: 0 }} /> : <div style={{ width: 48, height: 66, background: '#E8E4DC', flexShrink: 0 }} />}
               <div>
                 <div style={{ fontSize: 14, color: C.text, marginBottom: 5, lineHeight: 1.4, fontFamily: C.font }}>{book.title}</div>
@@ -504,7 +503,7 @@ export default function Home() {
     return (
       <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg }}>
         <NavBar onBack={() => setView('library')} title="BOOK" right={`영수증 ${rc}`} />
-        <div style={{ , gap: 16, padding: 20, borderBottom: `0.5px solid ${C.border}` }}>
+        <div style={{ display: 'flex', gap: 16, padding: 20, borderBottom: `0.5px solid ${C.border}` }}>
           {b.thumbnail ? <img src={b.thumbnail} alt={b.title} style={{ width: 68, height: 94, objectFit: 'cover', flexShrink: 0, boxShadow: '2px 2px 8px rgba(0,0,0,0.12)' }} /> : <div style={{ width: 68, height: 94, background: b.bg, borderRight: '3px solid rgba(0,0,0,0.08)', flexShrink: 0 }} />}
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 17, fontWeight: 600, color: C.text, marginBottom: 6, lineHeight: 1.4, fontFamily: C.font }}>{b.title}</div>
@@ -521,7 +520,7 @@ export default function Home() {
           <div style={{ fontSize: 10, letterSpacing: '0.14em', color: C.muted, textTransform: 'uppercase', marginBottom: 14, fontFamily: C.mono }}>발급된 영수증</div>
           {rc === 0 ? <div style={{ fontSize: 14, color: C.muted, textAlign: 'center', padding: '20px 0', fontFamily: C.font }}>아직 없어요</div>
             : b.receipts.map((r, i) => (
-              <div key={r.id} onClick={() => { setSelectedReceipt(r); setView('receipt') }} style={{ , justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: `0.5px solid ${C.border}`, cursor: 'pointer' }}>
+              <div key={r.id} onClick={() => { setSelectedReceipt(r); setView('receipt') }} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: `0.5px solid ${C.border}`, cursor: 'pointer' }}>
                 <div>
                   <div style={{ fontSize: 13, color: C.text, marginBottom: 3, fontFamily: C.font }}>ORDER #{String(i + 1).padStart(4, '0')} · {r.nickname}</div>
                   <div style={{ fontSize: 11, color: C.muted, fontFamily: C.font }}>{r.date} · {r.quotes.length}개의 문장</div>
@@ -549,13 +548,13 @@ export default function Home() {
           <input value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder="닉네임 입력" style={inputStyle} />
         </div>
         <div style={{ padding: 20 }}>
-          <div style={{ , justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
             <div style={{ fontSize: 10, letterSpacing: '0.14em', color: C.muted, textTransform: 'uppercase', fontFamily: C.mono }}>명대사</div>
             <div style={{ fontSize: 12, color: C.faint, fontFamily: C.font }}>{quotes.filter((q) => q.text).length}개 입력됨</div>
           </div>
           {quotes.map((q, i) => (
             <div key={i} style={{ background: '#EDE9E2', padding: 14, borderRadius: 4, marginBottom: 10 }}>
-              <div style={{ , justifyContent: 'space-between', marginBottom: 8 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 8 }}>
                 <span style={{ fontSize: 10, color: C.muted, fontFamily: C.mono }}>#{String(i + 1).padStart(2, '0')}</span>
                 {quotes.length > 1 && <span style={{ fontSize: 13, cursor: 'pointer', color: C.muted, fontFamily: C.font }} onClick={() => setQuotes(quotes.filter((_, idx) => idx !== i))}>삭제</span>}
               </div>
@@ -587,19 +586,19 @@ export default function Home() {
             <div style={{ textAlign: 'center', fontSize: 12, color: '#1A1A1A', marginBottom: 3 }}>ORDER {orderNum} FOR {r.nickname} ☆</div>
             <div style={{ textAlign: 'center', fontSize: 11, color: '#aaa' }}>{r.date}</div>
             <Divider />
-            <div style={{ , justifyContent: 'space-between', fontSize: 10, letterSpacing: '0.08em', color: '#aaa', marginBottom: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, letterSpacing: '0.08em', color: '#aaa', marginBottom: 10 }}>
               <span>NO</span><span style={{ flex: 1, textAlign: 'left', paddingLeft: 8 }}>SENTENCE</span><span>PAGE</span>
             </div>
             {r.quotes.map((q, i) => (
-              <div key={i} style={{ , gap: 8, marginBottom: 8, alignItems: 'flex-start', fontSize: 13, lineHeight: 1.7, color: '#1A1A1A' }}>
+              <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'flex-start', fontSize: 13, lineHeight: 1.7, color: '#1A1A1A' }}>
                 <span style={{ minWidth: 22, color: '#aaa', fontSize: 11, flexShrink: 0 }}>{String(i + 1).padStart(2, '0')}</span>
                 <span style={{ flex: 1 }}>{q.text}</span>
                 <span style={{ fontSize: 11, color: '#aaa', whiteSpace: 'nowrap', flexShrink: 0 }}>p.{q.page || '—'}</span>
               </div>
             ))}
             <Divider />
-            <div style={{ , justifyContent: 'space-between', fontSize: 12, lineHeight: 2.2, color: '#1A1A1A' }}><span>ITEM COUNT</span><span>{r.quotes.length}</span></div>
-            <div style={{ , justifyContent: 'space-between', fontSize: 12, fontWeight: 700, color: '#1A1A1A' }}><span>TOTAL</span><span>{r.quotes.length}개의 문장</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, lineHeight: 2.2, color: '#1A1A1A' }}><span>ITEM COUNT</span><span>{r.quotes.length}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 700, color: '#1A1A1A' }}><span>TOTAL</span><span>{r.quotes.length}개의 문장</span></div>
             <Divider />
             <div style={{ fontSize: 12, lineHeight: 2.3, color: '#1A1A1A' }}>
               <div>CARD #: {cardNum}</div>
@@ -610,7 +609,7 @@ export default function Home() {
             <Barcode seed={r.id} />
             <div style={{ textAlign: 'center', fontSize: 10, letterSpacing: '0.18em', color: '#ccc', marginTop: 10 }}>THANK YOU FOR READING!</div>
           </div>
-          <div style={{ marginTop: 12, , flexDirection: 'column', gap: 10 }}>
+          <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
             <button onClick={saveAsImage} style={btnOutline}>이미지로 저장하기 ↓</button>
             <button onClick={() => setView('detail')} style={btnOutline}>서재로 돌아가기</button>
           </div>
