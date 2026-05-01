@@ -76,7 +76,7 @@ function Divider() {
 }
 
 function getSpineTitle(title) {
-  const clean = title || ''
+  const clean = (title || '').replace(/\s+/g, '')
   const MAX = 12
   if (clean.length <= MAX) return clean
   return clean.slice(0, MAX) + '…'
@@ -84,9 +84,8 @@ function getSpineTitle(title) {
 
 function getFontSize(title) {
   const len = (title || '').length
-  if (len > 14) return 8
-  if (len > 10) return 9
-  if (len > 7) return 10
+  if (len > 11) return 9
+  if (len > 8) return 10
   return 11
 }
 
@@ -144,34 +143,49 @@ function BookSpine({ b, onClick }) {
       <div
         style={{
           flex: 1,
-          width: '100%',
           minHeight: 0,
+          width: '100%',
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
           overflow: 'hidden',
-          padding: '6px 0',
+          padding: '6px 0 8px',
           boxSizing: 'border-box',
         }}
       >
         <div
           title={b.title}
           style={{
-            writingMode: 'vertical-rl',
-            textOrientation: 'mixed',
+            height: 112,
             maxHeight: 112,
-            maxWidth: '100%',
+            width: '100%',
             overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 1,
             fontSize,
             fontWeight: fp.fw,
             color: tc,
             fontFamily: fp.f,
-            lineHeight: 1.05,
-            letterSpacing: '-0.03em',
-            wordBreak: 'keep-all',
+            lineHeight: 1,
+            boxSizing: 'border-box',
           }}
         >
-          {displayTitle}
+          {displayTitle.split('').map((char, i) => (
+            <span
+              key={i}
+              style={{
+                display: 'block',
+                lineHeight: 1,
+                height: fontSize + 1,
+                maxHeight: fontSize + 1,
+              }}
+            >
+              {char}
+            </span>
+          ))}
         </div>
       </div>
     </div>
