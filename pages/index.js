@@ -117,7 +117,7 @@ function BookSpine({ b, onClick }) {
         <div
           title={b.title}
           style={{
-            maxHeight: '110px', 
+            height: '100px',
             writingMode: 'vertical-rl',
             textOrientation: 'mixed',
             fontSize: safeTitle.length > 8 ? 10 : 12,
@@ -422,7 +422,7 @@ export default function Home() {
       <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg, display: 'flex', flexDirection: 'column' }}>
         <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 32px' }}>
           <img src="/logo.png" alt="STOCKED" style={{ height: 40, marginBottom: 16, objectFit: 'contain' }} />
-          <div style={{ fontSize: 13, color: C.muted, marginBottom: 56, fontFamily: C.font, letterSpacing: '0.05em' }}>나의 책장과 명대사 영수증</div>
+          <div style={{ fontSize: 13, color: 'rgba(0,0,0,0.55)', marginBottom: 56, fontFamily: C.font, letterSpacing: '0.05em' }}>나의 책장과 명대사 영수증</div>
           <div style={{ width: '100%', marginBottom: 10 }}>
             <button onClick={loginWithGoogle} style={{ ...btnOutline, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
               Google로 로그인
@@ -500,7 +500,7 @@ export default function Home() {
           </div>
         )}
 
-        <div style={{ textAlign: 'center', padding: '24px 20px', fontSize: 13, color: 'rgba(0,0,0,0.5)', fontFamily: C.mono, letterSpacing: '0.08em' }}>
+        <div style={{ textAlign: 'center', padding: '24px 20px', fontSize: 13, color: 'rgba(0,0,0,0.55)', fontFamily: C.mono, letterSpacing: '0.08em' }}>
           © kimsogenie · v.0.99.1
         </div>
       </div>
@@ -540,8 +540,8 @@ export default function Home() {
           {b.thumbnail ? <img src={b.thumbnail} alt={b.title} style={{ width: 68, height: 94, objectFit: 'cover', flexShrink: 0, boxShadow: '2px 2px 8px rgba(0,0,0,0.12)' }} /> : <div style={{ width: 68, height: 94, background: b.bg, borderRight: '3px solid rgba(0,0,0,0.08)', flexShrink: 0 }} />}
           <div style={{ flex: 1, minWidth: 0 }}>
             <div style={{ fontSize: 17, fontWeight: 600, color: C.text, marginBottom: 6, lineHeight: 1.4, fontFamily: C.font }}>{b.title}</div>
-            <div style={{ fontSize: 13, color: C.muted, marginBottom: 2, fontFamily: C.font }}>{b.author}</div>
-            <div style={{ fontSize: 13, color: C.muted, marginBottom: 12, fontFamily: C.font }}>{b.publisher}</div>
+            <div style={{ fontSize: 13, color: 'rgba(0,0,0,0.55)', marginBottom: 2, fontFamily: C.font }}>{b.author}</div>
+            <div style={{ fontSize: 13, color: 'rgba(0,0,0,0.55)', marginBottom: 12, fontFamily: C.font }}>{b.publisher}</div>
             <div style={{ fontSize: 10, letterSpacing: '0.08em', color: C.faint, fontFamily: C.mono }}>READ · {b.readDate}</div>
           </div>
         </div>
