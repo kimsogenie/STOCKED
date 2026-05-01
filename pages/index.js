@@ -77,15 +77,16 @@ function Divider() {
 
 function getSpineTitle(title) {
   const clean = title || ''
-  const MAX = 10
+  const MAX = 12
   if (clean.length <= MAX) return clean
   return clean.slice(0, MAX) + '…'
 }
 
 function getFontSize(title) {
   const len = (title || '').length
-  if (len > 12) return 9
-  if (len > 8) return 10
+  if (len > 14) return 8
+  if (len > 10) return 9
+  if (len > 7) return 10
   return 11
 }
 
@@ -122,7 +123,6 @@ function BookSpine({ b, onClick }) {
         e.currentTarget.style.boxShadow = 'none'
       }}
     >
-      {/* 저자 영역 */}
       <div
         style={{
           fontSize: 7,
@@ -141,41 +141,35 @@ function BookSpine({ b, onClick }) {
         {b.author}
       </div>
 
-      {/* 제목 영역: 회전 필살기 적용 */}
       <div
         style={{
           flex: 1,
           width: '100%',
-          position: 'relative',
+          minHeight: 0,
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
           overflow: 'hidden',
+          padding: '6px 0',
+          boxSizing: 'border-box',
         }}
       >
         <div
+          title={b.title}
           style={{
-            // 가로로 쓴 뒤 회전시켜서 세로쓰기처럼 보이게 함
-            transform: 'rotate(90deg)',
-            whiteSpace: 'nowrap',
-            position: 'absolute',
-            
-            // 회전 시 기준점이 뒤틀리므로 너비를 SPINE_H 근처로 고정
-            width: '110px', 
-            textAlign: 'center',
-            
+            writingMode: 'vertical-rl',
+            textOrientation: 'mixed',
+            maxHeight: 112,
+            maxWidth: '100%',
+            overflow: 'hidden',
             fontSize,
             fontWeight: fp.fw,
             color: tc,
             fontFamily: fp.f,
-            lineHeight: 1,
-            letterSpacing: '-0.02em',
-            
-            // 넘치는 글자 처리
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
+            lineHeight: 1.05,
+            letterSpacing: '-0.03em',
+            wordBreak: 'keep-all',
           }}
-          title={b.title}
         >
           {displayTitle}
         </div>
