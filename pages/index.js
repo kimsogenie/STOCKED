@@ -50,12 +50,6 @@ function BookSpine({ b, onClick }) {
   const w = getSpineWidth(b.pages)
   const fp = FONT_PAIRS[b.fp % FONT_PAIRS.length]
   const tc = b.spineText || '#1A1A1A'
-  const CHAR_H = 13
-  const AUTHOR_H = 20
-  const DOT_H = b.receipts && b.receipts.length > 0 ? 10 : 0
-  const availH = SPINE_H - AUTHOR_H - DOT_H - 8
-  const maxChars = Math.floor(availH / CHAR_H)
-  const chars = (b.title || '').slice(0, maxChars)
 
   return (
     <div
@@ -65,12 +59,15 @@ function BookSpine({ b, onClick }) {
         height: SPINE_H,
         background: b.bg,
         borderRight: '2px solid rgba(0,0,0,0.06)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
         cursor: 'pointer',
         flexShrink: 0,
-        position: 'relative',
         overflow: 'hidden',
         boxSizing: 'border-box',
         transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+        padding: '6px 2px 4px',
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = 'translateY(-8px)'
@@ -81,41 +78,29 @@ function BookSpine({ b, onClick }) {
         e.currentTarget.style.boxShadow = 'none'
       }}
     >
-      {/* 저자 */}
       <div style={{
-        position: 'absolute', top: 5, left: 0, right: 0,
         fontSize: 7, color: tc, opacity: 0.55,
-        fontFamily: C.font, textAlign: 'center',
-        overflow: 'hidden', whiteSpace: 'nowrap',
-        textOverflow: 'ellipsis', padding: '0 2px',
+        fontFamily: C.font, overflow: 'hidden',
+        whiteSpace: 'nowrap', textOverflow: 'ellipsis',
+        width: '100%', textAlign: 'center', flexShrink: 0,
       }}>
         {b.author}
       </div>
-
-      {/* 영수증 점 */}
-      {b.receipts && b.receipts.length > 0 && (
-        <div style={{
-          position: 'absolute', top: AUTHOR_H, left: 0, right: 0,
-          textAlign: 'center', fontSize: 6, color: tc, opacity: 0.5,
-        }}>●</div>
-      )}
-
-      {/* 제목: 글자마다 절대위치 - overflow:hidden으로 100% 클리핑 */}
-      {chars.split('').map((ch, i) => (
-        <div key={i} style={{
-          position: 'absolute',
-          top: AUTHOR_H + DOT_H + i * CHAR_H,
-          left: 0, right: 0,
-          textAlign: 'center',
-          fontSize: 11,
-          fontWeight: fp.fw,
-          color: tc,
-          fontFamily: fp.f,
-          lineHeight: 1,
-        }}>
-          {ch}
-        </div>
-      ))}
+      <div style={{
+        writingMode: 'vertical-rl',
+        fontSize: 10,
+        fontWeight: fp.fw,
+        color: tc,
+        fontFamily: fp.f,
+        lineHeight: `${w - 4}px`,
+        overflow: 'hidden',
+        whiteSpace: 'nowrap',
+        textOverflow: 'ellipsis',
+        flex: 1,
+        maxHeight: SPINE_H - 20,
+      }}>
+        {(b.title || '').slice(0, 10)}
+      </div>
     </div>
   )
 }
