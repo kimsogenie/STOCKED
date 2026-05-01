@@ -40,23 +40,23 @@ const SPINE_H = 150
 const SHELF_ROWS = 3
 
 function getSpineWidth(pages) {
-  const MIN_W = 56, MAX_W = 78, MIN_P = 100, MAX_P = 700
+  const MIN_W = 36, MAX_W = 60, MIN_P = 100, MAX_P = 700
   const c = Math.max(MIN_P, Math.min(MAX_P, pages || 250))
   return Math.round(MIN_W + ((c - MIN_P) / (MAX_P - MIN_P)) * (MAX_W - MIN_W))
 }
 
 function getSpineTitle(title) {
   const clean = (title || '').replace(/\s+/g, '')
-  const MAX = 10
+  const MAX = 7
   if (clean.length <= MAX) return clean
   return clean.slice(0, MAX) + '…'
 }
 
 function getFontSize(title) {
   const len = (title || '').length
-  if (len > 9) return 9
-  if (len > 6) return 10
-  return 11
+  if (len > 7) return 10
+  if (len > 5) return 11
+  return 12
 }
 
 function BookSpine({ b, onClick }) {
@@ -99,7 +99,7 @@ function BookSpine({ b, onClick }) {
           opacity: 0.6,
           fontFamily: C.font,
           lineHeight: 1.2,
-          padding: '8px 4px 0',
+          padding: '8px 2px 0',
           overflow: 'hidden',
           whiteSpace: 'nowrap',
           textOverflow: 'ellipsis',
@@ -113,8 +113,8 @@ function BookSpine({ b, onClick }) {
       <div
         style={{
           flex: 1,
-          minHeight: 0,
           width: '100%',
+          minHeight: 0,
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
@@ -126,9 +126,8 @@ function BookSpine({ b, onClick }) {
         <div
           title={b.title}
           style={{
-            height: 112,
-            maxHeight: 112,
-            width: w - 12,
+            width: '100%',
+            maxHeight: 96,
             overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
@@ -450,12 +449,6 @@ export default function Home() {
           <div style={{ fontSize: 13, color: C.muted, marginBottom: 56, fontFamily: C.font, letterSpacing: '0.05em' }}>나의 책장과 명대사 영수증</div>
           <div style={{ width: '100%', marginBottom: 10 }}>
             <button onClick={loginWithGoogle} style={{ ...btnOutline, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-              <svg width="18" height="18" viewBox="0 0 18 18">
-                <path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z"/>
-                <path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z"/>
-                <path fill="#FBBC05" d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z"/>
-                <path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/>
-              </svg>
               Google로 로그인
             </button>
           </div>
