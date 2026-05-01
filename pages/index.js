@@ -48,8 +48,8 @@ function getSpineWidth(pages) {
 // [핵심 수정 1] 제목이 넘치지 않도록 코드 단에서 강제 컷팅 (안전장치)
 function getSafeTitle(title) {
   if (!title) return "";
-  const MAX_LEN = 14; 
-  return title.length > MAX_LEN ? title.substring(0, MAX_LEN) + "..." : title;
+  const MAX_LEN = 10;
+  return title.length > MAX_LEN ? title.substring(0, MAX_LEN) + "…" : title;
 }
 
 function BookSpine({ b, onClick }) {
@@ -260,6 +260,7 @@ export default function Home() {
   const [books, setBooks] = useState([])
   const [user, setUser] = useState(null)
   const [isGuest, setIsGuest] = useState(false)
+  const [showGuestBanner, setShowGuestBanner] = useState(true)
   const [loading, setLoading] = useState(true)
   const [showOnboarding, setShowOnboarding] = useState(false)
   const [showGuestNotice, setShowGuestNotice] = useState(true)
@@ -499,7 +500,7 @@ export default function Home() {
           </div>
         )}
 
-        <div style={{ textAlign: 'center', padding: '24px 20px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
+        <div style={{ textAlign: 'center', padding: '24px 20px', fontSize: 13, color: 'rgba(0,0,0,0.5)', fontFamily: C.mono, letterSpacing: '0.08em' }}>
           © kimsogenie · v.0.99.1
         </div>
       </div>
