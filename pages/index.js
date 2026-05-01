@@ -50,10 +50,6 @@ function BookSpine({ b, onClick }) {
   const w = getSpineWidth(b.pages)
   const fp = FONT_PAIRS[b.fp % FONT_PAIRS.length]
   const tc = b.spineText || '#1A1A1A'
-  // 폰트 크기 9px, 줄 높이 1.3 기준 SPINE_H(150) - 저자(18) = 132px / 11.7 = 약 11글자
-  const maxChars = 11
-  const raw = b.title || ''
-  const display = raw.length > maxChars ? raw.slice(0, maxChars) + '…' : raw
 
   return (
     <div
@@ -61,17 +57,17 @@ function BookSpine({ b, onClick }) {
       style={{
         width: w,
         height: SPINE_H,
+        minHeight: SPINE_H,
+        maxHeight: SPINE_H,
         background: b.bg,
         borderRight: '2px solid rgba(0,0,0,0.06)',
+        display: 'block',
         cursor: 'pointer',
         flexShrink: 0,
         overflow: 'hidden',
         boxSizing: 'border-box',
         transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-        padding: '5px 2px 0',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
+        padding: '5px 3px',
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = 'translateY(-8px)'
@@ -83,26 +79,32 @@ function BookSpine({ b, onClick }) {
       }}
     >
       <div style={{
-        fontSize: 7, color: tc, opacity: 0.55,
-        fontFamily: C.font, overflow: 'hidden',
-        whiteSpace: 'nowrap', textOverflow: 'ellipsis',
-        width: '100%', textAlign: 'center',
-        marginBottom: 3, flexShrink: 0,
+        fontSize: 7,
+        color: tc,
+        opacity: 0.55,
+        fontFamily: C.font,
+        overflow: 'hidden',
+        whiteSpace: 'nowrap',
+        textOverflow: 'ellipsis',
+        textAlign: 'center',
+        marginBottom: 3,
       }}>
         {b.author}
       </div>
-      {display.split('').map((ch, i) => (
-        <span key={i} style={{
-          display: 'block',
-          fontSize: 9,
-          fontWeight: fp.fw,
-          color: tc,
-          fontFamily: fp.f,
-          lineHeight: 1.3,
-          textAlign: 'center',
-          flexShrink: 0,
-        }}>{ch}</span>
-      ))}
+      <div style={{
+        fontSize: 9,
+        fontWeight: fp.fw,
+        color: tc,
+        fontFamily: fp.f,
+        wordBreak: 'break-all',
+        overflow: 'hidden',
+        textAlign: 'center',
+        lineHeight: 1.35,
+        height: SPINE_H - 22,
+        maxHeight: SPINE_H - 22,
+      }}>
+        {(b.title || '').slice(0, 10)}
+      </div>
     </div>
   )
 }
