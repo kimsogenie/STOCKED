@@ -56,9 +56,7 @@ function BookSpine({ b, onClick }) {
       onClick={onClick}
       style={{
         width: w,
-        height: SPINE_H,
-        minHeight: SPINE_H,
-        maxHeight: SPINE_H,
+        height: 150,
         background: b.bg,
         borderRight: '2px solid rgba(0,0,0,0.06)',
         display: 'block',
@@ -99,11 +97,11 @@ function BookSpine({ b, onClick }) {
         wordBreak: 'break-all',
         overflow: 'hidden',
         textAlign: 'center',
-        lineHeight: 1.35,
-        height: SPINE_H - 22,
-        maxHeight: SPINE_H - 22,
+        lineHeight: '12px',
+        height: '70px',
+        maxHeight: '70px',
       }}>
-        {(b.title || '').slice(0, 10)}
+        {(b.title || '').slice(0, 8)}
       </div>
     </div>
   )
