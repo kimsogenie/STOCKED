@@ -45,17 +45,16 @@ function getSpineWidth(pages) {
   return Math.round(MIN_W + ((c - MIN_P) / (MAX_P - MIN_P)) * (MAX_W - MIN_W))
 }
 
+// 수정된 부분: 말줄임표 처리를 위해 글자 수 제한 로직 제거 혹은 완화
 function getSpineTitle(title) {
-  const clean = (title || '').replace(/\s+/g, '')
-  const MAX = 7
-  if (clean.length <= MAX) return clean
-  return clean.slice(0, MAX) + '…'
+  return title || '';
 }
 
+// 수정된 부분: 제목 길이에 따라 글자 크기를 유동적으로 조절
 function getFontSize(title) {
   const len = (title || '').length
+  if (len > 10) return 9
   if (len > 7) return 10
-  if (len > 5) return 11
   return 12
 }
 
@@ -99,7 +98,7 @@ function BookSpine({ b, onClick }) {
           opacity: 0.6,
           fontFamily: C.font,
           lineHeight: 1.2,
-          padding: '8px 2px 0',
+          padding: '8px 4px 0',
           overflow: 'hidden',
           whiteSpace: 'nowrap',
           textOverflow: 'ellipsis',
@@ -114,48 +113,36 @@ function BookSpine({ b, onClick }) {
         style={{
           flex: 1,
           width: '100%',
-          minHeight: 0,
           display: 'flex',
           justifyContent: 'center',
           alignItems: 'center',
           overflow: 'hidden',
-          padding: '6px 0 8px',
+          padding: '4px 2px',
           boxSizing: 'border-box',
         }}
       >
+        {/* 수정된 부분: CSS writing-mode를 활용하여 세로 정렬 및 말줄임 처리 */}
         <div
           title={b.title}
           style={{
-            width: '100%',
-            maxHeight: 96,
-            overflow: 'hidden',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 1,
-            fontSize,
+            maxHeight: '100%',
+            writingMode: 'vertical-rl',
+            textOrientation: 'mixed',
+            fontSize: fontSize,
             fontWeight: fp.fw,
             color: tc,
             fontFamily: fp.f,
-            lineHeight: 1,
-            boxSizing: 'border-box',
+            lineHeight: 1.1,
+            textAlign: 'center',
+            display: '-webkit-box',
+            WebkitLineClamp: 1,
+            WebkitBoxOrient: 'horizontal',
+            textOverflow: 'ellipsis',
+            overflow: 'hidden',
+            wordBreak: 'break-all'
           }}
         >
-          {displayTitle.split('').map((char, i) => (
-            <span
-              key={i}
-              style={{
-                display: 'block',
-                lineHeight: 1,
-                height: fontSize + 1,
-                maxHeight: fontSize + 1,
-                overflow: 'hidden',
-              }}
-            >
-              {char}
-            </span>
-          ))}
+          {displayTitle}
         </div>
       </div>
     </div>
