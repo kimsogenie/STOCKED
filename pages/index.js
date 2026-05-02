@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react'
+import Head from 'next/head'
 import { createClient } from '@supabase/supabase-js'
 
 const supabase = createClient(
@@ -250,6 +251,7 @@ export default function Home() {
   const [searching, setSearching] = useState(false)
   const [nickname, setNickname] = useState('')
   const [quotes, setQuotes] = useState([{ text: '', page: '' }])
+  const [editingField, setEditingField] = useState(null)
   const receiptRef = useRef(null)
 
   useEffect(() => {
@@ -368,6 +370,30 @@ export default function Home() {
     setView('receipt')
   }
 
+  const updateBook = async (bookId, field, value) => {
+    const updated = books.map((b) => b.id === bookId ? { ...b, [field]: value } : b)
+    setBooks(updated)
+    const b = updated.find((x) => x.id === bookId)
+    setSelectedBook(b)
+    if (!isGuest) {
+      const fieldMap = { readDate: 'read_date', pages: 'pages' }
+      await supabase.from('books').update({ [fieldMap[field] || field]: value }).eq('id', bookId)
+    } else {
+      localStorage.setItem('stocked_books', JSON.stringify(updated))
+    }
+    setEditingField(null)
+  }
+
+  const deleteReceipt = async (receiptId) => {
+    if (!window.confirm('이 영수증을 삭제할까요?')) return
+    const updated = books.map((b) => b.id === selectedBook.id
+      ? { ...b, receipts: b.receipts.filter((r) => r.id !== receiptId) }
+      : b
+    )
+    await saveBooks(updated)
+    setSelectedBook(updated.find((b) => b.id === selectedBook.id))
+  }
+
   const saveAsImage = async () => {
     if (!receiptRef.current) return
     try {
@@ -429,6 +455,18 @@ export default function Home() {
   if (view === 'library') {
     return (
       <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg }}>
+        <Head>
+          <title>STOCKED — 나의 책장과 명대사 영수증</title>
+          <meta name="description" content="읽은 책을 책장에 꽂고, 명대사를 영수증으로 만들어 저장하세요." />
+          <meta property="og:title" content="STOCKED — 나의 책장과 명대사 영수증" />
+          <meta property="og:description" content="읽은 책을 책장에 꽂고, 명대사를 영수증으로 만들어 저장하세요." />
+          <meta property="og:image" content="https://stocked-phi.vercel.app/logo.png" />
+          <meta property="og:url" content="https://stocked-phi.vercel.app" />
+          <meta property="og:type" content="website" />
+          <meta name="twitter:card" content="summary" />
+          <meta name="twitter:title" content="STOCKED — 나의 책장과 명대사 영수증" />
+          <meta name="twitter:description" content="읽은 책을 책장에 꽂고, 명대사를 영수증으로 만들어 저장하세요." />
+        </Head>
         {showOnboarding && <OnboardingModal onClose={handleOnboardingClose} />}
         <div style={{ padding: '20px 20px 16px', borderBottom: `0.5px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <img src="/logo.png" alt="STOCKED" style={{ height: 28, objectFit: 'contain' }} />
@@ -480,7 +518,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.0.99.4
+          © kimsogenie · v.1.0
         </div>
       </div>
     )
@@ -521,7 +559,43 @@ export default function Home() {
             <div style={{ fontSize: 17, fontWeight: 600, color: C.text, marginBottom: 6, lineHeight: 1.4, fontFamily: C.font }}>{b.title}</div>
             <div style={{ fontSize: 13, color: C.muted, marginBottom: 2, fontFamily: C.font }}>{b.author}</div>
             <div style={{ fontSize: 13, color: C.muted, marginBottom: 12, fontFamily: C.font }}>{b.publisher}</div>
-            <div style={{ fontSize: 10, letterSpacing: '0.08em', color: C.faint, fontFamily: C.mono }}>READ · {b.readDate}</div>
+            {/* 읽은 날짜 수정 */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+              <span style={{ fontSize: 10, letterSpacing: '0.08em', color: C.faint, fontFamily: C.mono }}>READ ·</span>
+              {editingField === 'readDate' ? (
+                <input
+                  defaultValue={b.readDate}
+                  autoFocus
+                  onBlur={(e) => updateBook(b.id, 'readDate', e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && updateBook(b.id, 'readDate', e.target.value)}
+                  style={{ fontSize: 10, fontFamily: C.mono, border: `0.5px solid ${C.borderMid}`, background: 'transparent', color: C.text, padding: '2px 4px', width: 90 }}
+                />
+              ) : (
+                <span
+                  onClick={() => setEditingField('readDate')}
+                  style={{ fontSize: 10, letterSpacing: '0.08em', color: C.faint, fontFamily: C.mono, cursor: 'pointer', borderBottom: `0.5px dashed ${C.faint}` }}
+                >{b.readDate} ✎</span>
+              )}
+            </div>
+            {/* 페이지 수 수정 */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+              <span style={{ fontSize: 10, letterSpacing: '0.08em', color: C.faint, fontFamily: C.mono }}>PAGES ·</span>
+              {editingField === 'pages' ? (
+                <input
+                  defaultValue={b.pages}
+                  autoFocus
+                  type="number"
+                  onBlur={(e) => updateBook(b.id, 'pages', Number(e.target.value) || 250)}
+                  onKeyDown={(e) => e.key === 'Enter' && updateBook(b.id, 'pages', Number(e.target.value) || 250)}
+                  style={{ fontSize: 10, fontFamily: C.mono, border: `0.5px solid ${C.borderMid}`, background: 'transparent', color: C.text, padding: '2px 4px', width: 60 }}
+                />
+              ) : (
+                <span
+                  onClick={() => setEditingField('pages')}
+                  style={{ fontSize: 10, letterSpacing: '0.08em', color: C.faint, fontFamily: C.mono, cursor: 'pointer', borderBottom: `0.5px dashed ${C.faint}` }}
+                >{b.pages}p ✎</span>
+              )}
+            </div>
           </div>
         </div>
         <div style={{ padding: '16px 20px', borderBottom: `0.5px solid ${C.border}` }}>
@@ -532,12 +606,15 @@ export default function Home() {
           <div style={{ fontSize: 10, letterSpacing: '0.14em', color: C.muted, textTransform: 'uppercase', marginBottom: 14, fontFamily: C.mono }}>발급된 영수증</div>
           {rc === 0 ? <div style={{ fontSize: 14, color: C.muted, textAlign: 'center', padding: '20px 0', fontFamily: C.font }}>아직 없어요</div>
             : b.receipts.map((r, i) => (
-              <div key={r.id} onClick={() => { setSelectedReceipt(r); setView('receipt') }} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: `0.5px solid ${C.border}`, cursor: 'pointer' }}>
-                <div>
+              <div key={r.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: `0.5px solid ${C.border}` }}>
+                <div onClick={() => { setSelectedReceipt(r); setView('receipt') }} style={{ flex: 1, cursor: 'pointer' }}>
                   <div style={{ fontSize: 13, color: C.text, marginBottom: 3, fontFamily: C.font }}>ORDER #{String(i + 1).padStart(4, '0')} · {r.nickname}</div>
                   <div style={{ fontSize: 11, color: C.muted, fontFamily: C.font }}>{r.date} · {r.quotes.length}개의 문장</div>
                 </div>
-                <span style={{ fontSize: 14, color: C.muted }}>→</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                  <span onClick={() => { setSelectedReceipt(r); setView('receipt') }} style={{ fontSize: 14, color: C.muted, cursor: 'pointer' }}>→</span>
+                  <span onClick={() => deleteReceipt(r.id)} style={{ fontSize: 14, color: 'rgba(180,50,50,0.5)', cursor: 'pointer' }}>×</span>
+                </div>
               </div>
             ))
           }
