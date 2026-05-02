@@ -269,15 +269,17 @@ export default function Home() {
     setBooks(updated)
     if (isGuest) {
       localStorage.setItem('stocked_books', JSON.stringify(updated))
-    } else {
-      for (const b of updated) {
-        await supabase.from('books').upsert({
-          id: b.id, user_id: user.id, title: b.title, author: b.author,
-          publisher: b.publisher, thumbnail: b.thumbnail, read_date: b.readDate,
-          pages: b.pages, h: b.h, bg: b.bg, spine_text: b.spineText,
-          fp: b.fp, receipts: b.receipts,
-        })
-      }
+    }
+  }
+
+  const insertBook = async (newBook) => {
+    if (!isGuest) {
+      await supabase.from('books').insert({
+        id: newBook.id, user_id: user.id, title: newBook.title, author: newBook.author,
+        publisher: newBook.publisher, thumbnail: newBook.thumbnail, read_date: newBook.readDate,
+        pages: newBook.pages, h: newBook.h, bg: newBook.bg, spine_text: newBook.spineText,
+        fp: newBook.fp, receipts: newBook.receipts,
+      })
     }
   }
 
@@ -357,6 +359,7 @@ export default function Home() {
       fp: books.length % FONT_PAIRS.length, receipts: [],
     }
     await saveBooks([...books, newBook])
+    await insertBook(newBook)
     setView('library')
     setSearchQuery('')
     setSearchResults([])
@@ -369,8 +372,14 @@ export default function Home() {
     const d = new Date()
     const dateStr = `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
     const newReceipt = { id: Date.now(), date: dateStr, nickname, quotes: valid }
-    const updated = books.map((b) => b.id === selectedBook.id ? { ...b, receipts: [...b.receipts, newReceipt] } : b)
-    await saveBooks(updated)
+    const updatedReceipts = [...selectedBook.receipts, newReceipt]
+    const updated = books.map((b) => b.id === selectedBook.id ? { ...b, receipts: updatedReceipts } : b)
+    setBooks(updated)
+    if (!isGuest) {
+      await supabase.from('books').update({ receipts: updatedReceipts }).eq('id', selectedBook.id)
+    } else {
+      localStorage.setItem('stocked_books', JSON.stringify(updated))
+    }
     setSelectedBook(updated.find((b) => b.id === selectedBook.id))
     setSelectedReceipt(newReceipt)
     setView('receipt')
@@ -392,11 +401,14 @@ export default function Home() {
 
   const deleteReceipt = async (receiptId) => {
     if (!window.confirm('이 영수증을 삭제할까요?')) return
-    const updated = books.map((b) => b.id === selectedBook.id
-      ? { ...b, receipts: b.receipts.filter((r) => r.id !== receiptId) }
-      : b
-    )
-    await saveBooks(updated)
+    const updatedReceipts = selectedBook.receipts.filter((r) => r.id !== receiptId)
+    const updated = books.map((b) => b.id === selectedBook.id ? { ...b, receipts: updatedReceipts } : b)
+    setBooks(updated)
+    if (!isGuest) {
+      await supabase.from('books').update({ receipts: updatedReceipts }).eq('id', selectedBook.id)
+    } else {
+      localStorage.setItem('stocked_books', JSON.stringify(updated))
+    }
     setSelectedBook(updated.find((b) => b.id === selectedBook.id))
   }
 
