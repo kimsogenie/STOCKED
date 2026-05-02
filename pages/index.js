@@ -46,7 +46,7 @@ function getSpineWidth(pages) {
 }
 
 function getSpineTitle(title) {
-  const MAX = 10
+  const MAX = 8
   if (!title) return ''
   return title.length > MAX ? title.slice(0, MAX) + '…' : title
 }
@@ -104,8 +104,11 @@ function BookSpine({ b, onClick }) {
         overflow: 'hidden',
         textAlign: 'center',
         lineHeight: '12px',
-        height: '70px',
-        maxHeight: '70px',
+        height: '60px',
+        maxHeight: '60px',
+        display: '-webkit-box',
+        WebkitLineClamp: 5,
+        WebkitBoxOrient: 'vertical',
       }}>
         {getSpineTitle(b.title)}
       </div>
@@ -338,7 +341,7 @@ export default function Home() {
     const colorSet = SPINE_COLORS[books.length % SPINE_COLORS.length]
     const newBook = {
       id: Date.now(), title: kakaoBook.title, author: kakaoBook.authors?.join(', ') || '',
-      publisher: kakaoBook.publisher || '', thumbnail: kb.thumbnail || '',
+      publisher: kakaoBook.publisher || '', thumbnail: kakaoBook.thumbnail || '',
       readDate: new Date().toLocaleDateString('ko-KR').replace(/\. /g, '.').slice(0, -1),
       pages: 250, h: SPINE_H,
       bg: colorSet.bg, spineText: colorSet.text,
@@ -476,7 +479,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.TEST
+          © kimsogenie · v.0.99.3
         </div>
       </div>
     )
