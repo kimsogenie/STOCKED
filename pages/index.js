@@ -472,6 +472,10 @@ export default function Home() {
           <meta name="twitter:card" content="summary" />
           <meta name="twitter:title" content="STOCKED — 나의 책장과 명대사 영수증" />
           <meta name="twitter:description" content="읽은 책을 책장에 꽂고, 명대사를 영수증으로 만들어 저장하세요." />
+          <link rel="apple-touch-icon" href="/logo.png" />
+          <meta name="apple-mobile-web-app-capable" content="yes" />
+          <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+          <meta name="apple-mobile-web-app-title" content="STOCKED" />
         </Head>
         {showOnboarding && <OnboardingModal onClose={handleOnboardingClose} />}
         <div style={{ padding: '20px 20px 16px', borderBottom: `0.5px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -524,7 +528,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.0
+          © kimsogenie · v.0.99.99
         </div>
       </div>
     )
