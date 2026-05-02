@@ -342,11 +342,24 @@ export default function Home() {
 
   const addBook = async (kakaoBook) => {
     const colorSet = SPINE_COLORS[books.length % SPINE_COLORS.length]
+
+    // ISBN으로 Google Books에서 페이지 수 가져오기
+    let pages = 250
+    const isbn = kakaoBook.isbn?.split(' ')[0]
+    if (isbn) {
+      try {
+        const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`)
+        const data = await res.json()
+        const p = data.items?.[0]?.volumeInfo?.pageCount
+        if (p && p > 0) pages = p
+      } catch {}
+    }
+
     const newBook = {
       id: Date.now(), title: kakaoBook.title, author: kakaoBook.authors?.join(', ') || '',
       publisher: kakaoBook.publisher || '', thumbnail: kakaoBook.thumbnail || '',
       readDate: new Date().toLocaleDateString('ko-KR').replace(/\. /g, '.').slice(0, -1),
-      pages: 250, h: SPINE_H,
+      pages, h: SPINE_H,
       bg: colorSet.bg, spineText: colorSet.text,
       fp: books.length % FONT_PAIRS.length, receipts: [],
     }
@@ -518,7 +531,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.0
+          © kimsogenie · v.0.99.99
         </div>
       </div>
     )
