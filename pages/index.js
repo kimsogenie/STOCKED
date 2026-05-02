@@ -148,61 +148,40 @@ function Divider() {
   return <div style={{ borderTop: `1px dashed ${C.border}`, margin: '12px 0' }} />
 }
 
-function BookShelf({ books, onBookClick, onAddClick }) {
-  const rows = []
-  for (let i = 0; i < SHELF_ROWS; i++) {
-    rows.push(books.slice(i * BOOKS_PER_ROW, (i + 1) * BOOKS_PER_ROW))
-  }
-  const extra = books.slice(SHELF_ROWS * BOOKS_PER_ROW)
 
+function BookShelf({ books, onBookClick, onAddClick }) {
   return (
-    <div style={{ background: C.bgShelf }}>
-      {rows.map((row, ri) => {
-        const isLast = ri === SHELF_ROWS - 1
-        const rowBooks = isLast ? [...row, ...extra] : row
-        return (
-          <div key={ri} style={{ borderBottom: isLast ? 'none' : `1px solid rgba(0,0,0,0.07)` }}>
-            <div style={{
-              display: 'flex',
-              gap: 2,
-              overflowX: 'auto',
-              overflowY: 'hidden',
-              padding: '20px 16px 16px',
-              alignItems: 'flex-end',
-              height: SPINE_H + 40,
-              scrollbarWidth: 'none',
-              msOverflowStyle: 'none',
-              WebkitOverflowScrolling: 'touch',
-            }}>
-              {rowBooks.map((b) => (
-                <BookSpine key={b.id} b={b} onClick={() => onBookClick(b)} />
-              ))}
-              {isLast && (
-                <div
-                  onClick={onAddClick}
-                  style={{
-                    width: 32, height: SPINE_H,
-                    border: `1px dashed ${C.borderMid}`,
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    cursor: 'pointer', flexShrink: 0,
-                    color: C.muted, fontSize: 18,
-                    alignSelf: 'flex-end',
-                  }}
-                >+</div>
-              )}
-            </div>
-          </div>
-        )
-      })}
-      <div style={{ fontSize: 8, letterSpacing: '0.12em', color: C.faint, textAlign: 'center', paddingBottom: 12, fontFamily: C.mono }}>
-        — 스크롤 —
+    <div style={{ background: C.bgShelf, padding: '20px 16px 8px' }}>
+      <div style={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        gap: 2,
+        alignItems: 'flex-end',
+        minHeight: SPINE_H + 20,
+      }}>
+        {books.map((b) => (
+          <BookSpine key={b.id} b={b} onClick={() => onBookClick(b)} />
+        ))}
+        <div
+          onClick={onAddClick}
+          style={{
+            width: 32, height: SPINE_H,
+            border: `1px dashed ${C.borderMid}`,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            cursor: 'pointer', flexShrink: 0,
+            color: C.muted, fontSize: 18,
+            alignSelf: 'flex-end',
+          }}
+        >+</div>
       </div>
     </div>
   )
 }
 
+
 const ONBOARDING_STEPS = [
   { emoji: '📚', title: '책 추가하기', desc: '+ 버튼을 눌러 읽은 책을 검색하고 내 서재에 꽂아보세요.' },
+  { emoji: '✏️', title: '날짜·페이지 수 수정', desc: '책을 클릭하면 읽은 날짜와 페이지 수를 직접 수정할 수 있어요. 페이지 수는 spine 두께에 바로 반영돼요.' },
   { emoji: '🧾', title: '명대사 영수증', desc: '책을 클릭하면 영수증 발급 버튼이 나와요. 기억하고 싶은 문장을 골라 나만의 영수증을 만들어보세요.' },
   { emoji: '💾', title: '이미지로 저장', desc: '완성된 영수증은 이미지로 저장해서 SNS에 공유할 수 있어요.' },
   { emoji: '☁️', title: '어디서든 내 서재', desc: '구글 로그인하면 모든 기기에서 내 서재와 영수증을 볼 수 있어요.' },
@@ -341,17 +320,31 @@ export default function Home() {
   }
 
   const addBook = async (kakaoBook) => {
-    const colorSet = SPINE_COLORS[books.length % SPINE_COLORS.length]
-
-    // ISBN으로 Google Books에서 페이지 수 가져오기
+    // 1. 페이지 수: Google Books ISBN → title fallback
     let pages = 250
-    const isbn = kakaoBook.isbn?.split(' ')[0]
-    if (isbn) {
+    const isbn = (kakaoBook.isbn || '').split(' ').find(s => s.length >= 10)
+    try {
+      if (isbn) {
+        const r = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&maxResults=1`)
+        const d = await r.json()
+        const p = d.items?.[0]?.volumeInfo?.pageCount
+        if (p > 0) pages = p
+      }
+      if (pages === 250 && kakaoBook.title) {
+        const r = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(kakaoBook.title)}&maxResults=1`)
+        const d = await r.json()
+        const p = d.items?.[0]?.volumeInfo?.pageCount
+        if (p > 0) pages = p
+      }
+    } catch {}
+
+    // 2. 표지 컬러 추출 → fallback: 고정 팔레트
+    let colorSet = SPINE_COLORS[books.length % SPINE_COLORS.length]
+    if (kakaoBook.thumbnail) {
       try {
-        const res = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}`)
-        const data = await res.json()
-        const p = data.items?.[0]?.volumeInfo?.pageCount
-        if (p && p > 0) pages = p
+        const r = await fetch(`/api/book-color?url=${encodeURIComponent(kakaoBook.thumbnail)}`)
+        const { bg, text } = await r.json()
+        if (bg && text) colorSet = { bg, text }
       } catch {}
     }
 
