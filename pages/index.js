@@ -358,8 +358,19 @@ export default function Home() {
       bg: colorSet.bg, spineText: colorSet.text,
       fp: books.length % FONT_PAIRS.length, receipts: [],
     }
-    await saveBooks([...books, newBook])
-    await insertBook(newBook)
+    if (isGuest) {
+      const updated = [...books, newBook]
+      setBooks(updated)
+      localStorage.setItem('stocked_books', JSON.stringify(updated))
+    } else {
+      await supabase.from('books').insert({
+        id: newBook.id, user_id: user.id, title: newBook.title, author: newBook.author,
+        publisher: newBook.publisher, thumbnail: newBook.thumbnail, read_date: newBook.readDate,
+        pages: newBook.pages, h: newBook.h, bg: newBook.bg, spine_text: newBook.spineText,
+        fp: newBook.fp, receipts: newBook.receipts,
+      })
+      await loadBooks(user.id)
+    }
     setView('library')
     setSearchQuery('')
     setSearchResults([])
@@ -428,6 +439,7 @@ export default function Home() {
     width: '100%', padding: '11px 12px', fontSize: 15,
     border: `0.5px solid ${C.borderMid}`, background: 'transparent', color: C.text,
     fontFamily: C.font, outline: 'none', WebkitAppearance: 'none', borderRadius: 0,
+    boxSizing: 'border-box',
   }
 
   const btnOutline = {
@@ -540,7 +552,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.0.99.99
+          © kimsogenie · v.1.0.1
         </div>
       </div>
     )
@@ -731,3 +743,4 @@ export default function Home() {
 
   return null
 }
+  
