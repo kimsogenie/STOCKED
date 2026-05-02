@@ -65,13 +65,15 @@ function BookSpine({ b, onClick }) {
         height: 150,
         background: b.bg,
         borderRight: '2px solid rgba(0,0,0,0.06)',
-        display: 'block',
+        display: 'flex',
+        flexDirection: 'column',
+        justifyContent: 'space-between',
         cursor: 'pointer',
         flexShrink: 0,
         overflow: 'hidden',
         boxSizing: 'border-box',
         transition: 'transform 0.2s ease, box-shadow 0.2s ease',
-        padding: '5px 3px',
+        padding: '6px 3px',
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = 'translateY(-8px)'
@@ -91,7 +93,6 @@ function BookSpine({ b, onClick }) {
         whiteSpace: 'nowrap',
         textOverflow: 'ellipsis',
         textAlign: 'center',
-        marginBottom: 3,
       }}>
         {b.author}
       </div>
@@ -479,7 +480,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.0.99.3
+          © kimsogenie · v.0.99.4
         </div>
       </div>
     )
