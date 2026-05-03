@@ -229,6 +229,7 @@ export default function Home() {
   const [searchResults, setSearchResults] = useState([])
   const [searching, setSearching] = useState(false)
   const [nickname, setNickname] = useState('')
+  const [isAddingBook, setIsAddingBook] = useState(false)
   const [quotes, setQuotes] = useState([{ text: '', page: '' }])
   const [editingField, setEditingField] = useState(null)
   const receiptRef = useRef(null)
@@ -322,6 +323,9 @@ export default function Home() {
   }
 
   const addBook = async (kakaoBook) => {
+    if (isAddingBook) return
+    setIsAddingBook(true)
+    try {
     // 1. 페이지 수: Google Books ISBN → title fallback
     let pages = 250
     const isbn = (kakaoBook.isbn || '').split(' ').find(s => s.length >= 10)
@@ -374,10 +378,14 @@ export default function Home() {
     setView('library')
     setSearchQuery('')
     setSearchResults([])
+    } finally {
+      setIsAddingBook(false)
+    }
   }
 
   const generateReceipt = async () => {
     if (!nickname.trim()) return alert('닉네임을 입력해주세요')
+    localStorage.setItem('stocked_nickname', nickname.trim())
     const valid = quotes.filter((q) => q.text.trim())
     if (!valid.length) return alert('명대사를 하나 이상 입력해주세요')
     const d = new Date()
@@ -428,10 +436,21 @@ export default function Home() {
     try {
       const html2canvas = (await import('html2canvas')).default
       const canvas = await html2canvas(receiptRef.current, { scale: 2, backgroundColor: '#ffffff' })
-      const link = document.createElement('a')
-      link.download = `stocked_${selectedBook.title}_${selectedReceipt.date}.png`
-      link.href = canvas.toDataURL()
-      link.click()
+      const dataUrl = canvas.toDataURL('image/png')
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+      if (isIOS) {
+        const w = window.open('')
+        w.document.write('<html><body style="margin:0;background:#f5f2ec">')
+        w.document.write('<p style="font-family:sans-serif;font-size:13px;padding:12px 16px;color:#666">이미지를 길게 눌러 사진으로 저장하세요</p>')
+        w.document.write('<img src="' + dataUrl + '" style="max-width:100%;display:block"/>')
+        w.document.write('</body></html>')
+        w.document.close()
+      } else {
+        const link = document.createElement('a')
+        link.download = `stocked_${selectedBook.title}_${selectedReceipt.date}.png`
+        link.href = dataUrl
+        link.click()
+      }
     } catch { alert('이미지 저장 중 오류가 발생했습니다') }
   }
 
@@ -552,7 +571,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.0.1
+          © kimsogenie · v.1.0.3
         </div>
       </div>
     )
@@ -562,13 +581,19 @@ export default function Home() {
     return (
       <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg }}>
         <NavBar onBack={() => setView('library')} title="책 추가" right="" />
+        {isAddingBook && (
+          <div style={{ position: 'fixed', inset: 0, background: 'rgba(245,242,236,0.85)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 999 }}>
+            <div style={{ fontSize: 28, marginBottom: 12 }}>📚</div>
+            <div style={{ fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.1em' }}>서재에 꽂는 중...</div>
+          </div>
+        )}
         <div style={{ padding: 20 }}>
           <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
             <input value={searchQuery} onChange={(e) => setSearchQuery(e.target.value)} onKeyDown={(e) => e.key === 'Enter' && handleSearch()} placeholder="책 제목 또는 저자..." style={{ ...inputStyle, flex: 1 }} />
             <button onClick={handleSearch} style={{ ...btnSolid, width: 'auto', padding: '0 18px' }}>{searching ? '...' : '검색'}</button>
           </div>
           {searchResults.map((book, i) => (
-            <div key={i} onClick={() => addBook(book)} style={{ display: 'flex', gap: 14, padding: '14px 0', borderBottom: `0.5px solid ${C.border}`, cursor: 'pointer' }}>
+            <div key={i} onClick={() => addBook(book)} style={{ display: 'flex', gap: 14, padding: '14px 0', borderBottom: `0.5px solid ${C.border}`, cursor: isAddingBook ? 'default' : 'pointer', opacity: isAddingBook ? 0.4 : 1 }}>
               {book.thumbnail ? <img src={book.thumbnail} alt={book.title} style={{ width: 48, height: 66, objectFit: 'cover', flexShrink: 0 }} /> : <div style={{ width: 48, height: 66, background: '#E8E4DC', flexShrink: 0 }} />}
               <div>
                 <div style={{ fontSize: 14, color: C.text, marginBottom: 5, lineHeight: 1.4, fontFamily: C.font }}>{book.title}</div>
@@ -633,7 +658,12 @@ export default function Home() {
           </div>
         </div>
         <div style={{ padding: '16px 20px', borderBottom: `0.5px solid ${C.border}` }}>
-          <button onClick={() => { setNickname(''); setQuotes([{ text: '', page: '' }]); setView('form') }} style={{ ...btnSolid, marginBottom: 8 }}>영수증 발급하기 →</button>
+          <button onClick={() => {
+            const saved = localStorage.getItem('stocked_nickname') || ''
+            setNickname(saved)
+            setQuotes([{ text: '', page: '' }])
+            setView('form')
+          }} style={{ ...btnSolid, marginBottom: 8 }}>영수증 발급하기 →</button>
           <button onClick={() => deleteBook(b.id)} style={{ ...btnOutline, fontSize: 12, color: 'rgba(180,50,50,0.7)', borderColor: 'rgba(180,50,50,0.25)' }}>서재에서 삭제</button>
         </div>
         <div style={{ padding: 20 }}>
@@ -698,9 +728,25 @@ export default function Home() {
     const orderNum = `#${String(idx + 1).padStart(4, '0')}`
     const cardNum = `**** **** **** ${1000 + (r.id % 9000)}`
     const authCode = String(100000 + (r.id * 7) % 900000)
+    const hasPrev = idx > 0
+    const hasNext = idx < b.receipts.length - 1
     return (
       <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg }}>
         <NavBar onBack={() => setView('detail')} title="RECEIPT" right="" />
+        {/* 이전/다음 네비게이션 */}
+        {b.receipts.length > 1 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 20px', borderBottom: `0.5px solid ${C.border}` }}>
+            <button
+              onClick={() => hasPrev && setSelectedReceipt(b.receipts[idx - 1])}
+              style={{ background: 'none', border: 'none', cursor: hasPrev ? 'pointer' : 'default', color: hasPrev ? C.text : C.faint, fontFamily: C.mono, fontSize: 12, padding: 0 }}
+            >← 이전</button>
+            <span style={{ fontSize: 11, color: C.muted, fontFamily: C.mono }}>{idx + 1} / {b.receipts.length}</span>
+            <button
+              onClick={() => hasNext && setSelectedReceipt(b.receipts[idx + 1])}
+              style={{ background: 'none', border: 'none', cursor: hasNext ? 'pointer' : 'default', color: hasNext ? C.text : C.faint, fontFamily: C.mono, fontSize: 12, padding: 0 }}
+            >다음 →</button>
+          </div>
+        )}
         <div style={{ padding: 20 }}>
           <div ref={receiptRef} style={{ background: '#fff', border: `0.5px solid ${C.border}`, borderRadius: 3, padding: '24px 18px', fontFamily: C.receipt }}>
             <div style={{ textAlign: 'center', fontSize: 15, letterSpacing: '0.3em', color: '#bbb', marginBottom: 14 }}>° ✦ ☆ ✦ °</div>
@@ -733,8 +779,8 @@ export default function Home() {
             <div style={{ textAlign: 'center', fontSize: 10, letterSpacing: '0.18em', color: '#ccc', marginTop: 10 }}>THANK YOU FOR READING!</div>
           </div>
           <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
-            <button onClick={saveAsImage} style={btnOutline}>이미지로 저장하기 ↓</button>
-            <button onClick={() => setView('detail')} style={btnOutline}>서재로 돌아가기</button>
+            <button onClick={saveAsImage} style={btnSolid}>이미지로 저장하기 ↓</button>
+            <button onClick={() => setView('detail')} style={btnOutline}>영수증 목록으로</button>
           </div>
         </div>
       </div>
@@ -743,4 +789,3 @@ export default function Home() {
 
   return null
 }
-  
