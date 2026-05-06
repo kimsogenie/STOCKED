@@ -231,6 +231,9 @@ export default function Home() {
   const [nickname, setNickname] = useState('')
   const [isAddingBook, setIsAddingBook] = useState(false)
   const [imgPreview, setImgPreview] = useState(null)
+  const [errorModal, setErrorModal] = useState(false)
+  const [errorText, setErrorText] = useState('')
+  const [errorSending, setErrorSending] = useState(false)
   const [quotes, setQuotes] = useState([{ text: '', page: '' }])
   const [editingField, setEditingField] = useState(null)
   const receiptRef = useRef(null)
@@ -498,6 +501,54 @@ export default function Home() {
     )
   }
 
+  const submitError = async () => {
+    if (!errorText.trim()) return
+    setErrorSending(true)
+    try {
+      await fetch('https://formspree.io/f/mojrwzjo', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: errorText,
+          user: user?.email || '게스트',
+          page: view,
+          ua: navigator.userAgent,
+        }),
+      })
+      setErrorText('')
+      setErrorModal(false)
+      alert('신고가 접수됐어요. 감사합니다!')
+    } catch {
+      alert('전송 실패. 다시 시도해주세요.')
+    } finally {
+      setErrorSending(false)
+    }
+  }
+
+  if (errorModal) {
+    return (
+      <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 24 }}>
+        <div style={{ background: C.bg, width: '100%', maxWidth: 400, padding: 24, borderRadius: 4 }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: C.text, fontFamily: C.font, marginBottom: 6 }}>오류 신고</div>
+          <div style={{ fontSize: 12, color: C.muted, fontFamily: C.font, marginBottom: 16 }}>어떤 오류가 발생했는지 알려주세요. 빠르게 확인할게요.</div>
+          <textarea
+            value={errorText}
+            onChange={(e) => setErrorText(e.target.value)}
+            placeholder="예: 책 추가 후 목록에 두 권이 나와요"
+            rows={5}
+            style={{ ...inputStyle, resize: 'none', display: 'block', marginBottom: 12 }}
+          />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => { setErrorModal(false); setErrorText('') }} style={{ ...btnOutline, flex: 1 }}>취소</button>
+            <button onClick={submitError} disabled={errorSending} style={{ ...btnSolid, flex: 1, opacity: errorSending ? 0.6 : 1 }}>
+              {errorSending ? '전송 중...' : '제출하기'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (imgPreview) {
     return (
       <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 }}>
@@ -587,8 +638,13 @@ export default function Home() {
           </div>
         )}
 
-        <div style={{ textAlign: 'center', padding: '24px 20px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.0.6
+        <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
+          © kimsogenie · v.1.0.7
+        </div>
+        <div style={{ textAlign: 'center', paddingBottom: 24 }}>
+          <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
+            오류 신고하기
+          </button>
         </div>
       </div>
     )
