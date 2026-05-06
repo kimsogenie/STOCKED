@@ -229,6 +229,19 @@ export default function Home() {
   const [searchResults, setSearchResults] = useState([])
   const [searching, setSearching] = useState(false)
   const [nickname, setNickname] = useState('')
+  const [receiptBg, setReceiptBg] = useState('#ffffff')
+  const [receiptText, setReceiptText] = useState('#1A1A1A')
+
+  const RECEIPT_THEMES = [
+    { name: '클래식', bg: '#ffffff', text: '#1A1A1A' },
+    { name: '크림', bg: '#FDF8F0', text: '#3D2B1F' },
+    { name: '다크', bg: '#1C1C1E', text: '#F5F5F0' },
+    { name: '민트', bg: '#E8F5F2', text: '#1A3D35' },
+    { name: '로즈', bg: '#FDF0F0', text: '#5C1A1A' },
+    { name: '인디고', bg: '#EEF0F8', text: '#1A1E5C' },
+    { name: '세이지', bg: '#EFF3EC', text: '#1E3320' },
+    { name: '샌드', bg: '#F5EFE6', text: '#3D2E1A' },
+  ]
   const [isAddingBook, setIsAddingBook] = useState(false)
   const [imgPreview, setImgPreview] = useState(null)
   const [errorModal, setErrorModal] = useState(false)
@@ -402,7 +415,7 @@ export default function Home() {
     if (!valid.length) return alert('명대사를 하나 이상 입력해주세요')
     const d = new Date()
     const dateStr = `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
-    const newReceipt = { id: Date.now(), date: dateStr, nickname, quotes: valid }
+    const newReceipt = { id: Date.now(), date: dateStr, nickname, quotes: valid, bg: receiptBg, textColor: receiptText }
     const updatedReceipts = [...selectedBook.receipts, newReceipt]
     const updated = books.map((b) => b.id === selectedBook.id ? { ...b, receipts: updatedReceipts } : b)
     setBooks(updated)
@@ -639,7 +652,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.0.7
+          © kimsogenie · v.1.0.8
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
@@ -734,6 +747,8 @@ export default function Home() {
           <button onClick={() => {
             const saved = localStorage.getItem('stocked_nickname') || ''
             setNickname(saved)
+            setReceiptBg('#ffffff')
+            setReceiptText('#1A1A1A')
             setQuotes([{ text: '', page: '' }])
             setView('form')
           }} style={{ ...btnSolid, marginBottom: 8 }}>영수증 발급하기 →</button>
@@ -773,6 +788,30 @@ export default function Home() {
           <div style={{ fontSize: 10, letterSpacing: '0.14em', color: C.muted, textTransform: 'uppercase', marginBottom: 8, fontFamily: C.mono }}>CARDHOLDER</div>
           <input value={nickname} onChange={(e) => setNickname(e.target.value)} placeholder="닉네임 입력" style={inputStyle} />
         </div>
+        <div style={{ padding: '16px 20px', borderBottom: `0.5px solid ${C.border}` }}>
+          <div style={{ fontSize: 10, letterSpacing: '0.14em', color: C.muted, textTransform: 'uppercase', marginBottom: 12, fontFamily: C.mono }}>영수증 테마</div>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, marginBottom: 14 }}>
+            {RECEIPT_THEMES.map((t) => (
+              <div key={t.name} onClick={() => { setReceiptBg(t.bg); setReceiptText(t.text) }}
+                style={{ background: t.bg, color: t.text, border: receiptBg === t.bg && receiptText === t.text ? `2px solid ${t.text}` : `1px solid rgba(0,0,0,0.1)`, borderRadius: 3, padding: '5px 10px', fontSize: 11, cursor: 'pointer', fontFamily: C.mono }}>
+                {t.name}
+              </div>
+            ))}
+          </div>
+          <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 11, color: C.muted, fontFamily: C.mono }}>배경</span>
+              <input type="color" value={receiptBg} onChange={(e) => setReceiptBg(e.target.value)} style={{ width: 32, height: 28, border: `0.5px solid ${C.borderMid}`, padding: 2, cursor: 'pointer', background: 'none' }} />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span style={{ fontSize: 11, color: C.muted, fontFamily: C.mono }}>글자</span>
+              <input type="color" value={receiptText} onChange={(e) => setReceiptText(e.target.value)} style={{ width: 32, height: 28, border: `0.5px solid ${C.borderMid}`, padding: 2, cursor: 'pointer', background: 'none' }} />
+            </div>
+            <div style={{ flex: 1, background: receiptBg, color: receiptText, border: `0.5px solid rgba(0,0,0,0.08)`, borderRadius: 3, padding: '6px 10px', fontSize: 11, fontFamily: C.receipt, textAlign: 'center' }}>
+              미리보기 ☆
+            </div>
+          </div>
+        </div>
         <div style={{ padding: 20 }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
             <div style={{ fontSize: 10, letterSpacing: '0.14em', color: C.muted, textTransform: 'uppercase', fontFamily: C.mono }}>명대사</div>
@@ -797,6 +836,9 @@ export default function Home() {
 
   if (view === 'receipt' && selectedBook && selectedReceipt) {
     const b = selectedBook, r = selectedReceipt
+    const rBg = r.bg || '#ffffff'
+    const rText = r.textColor || '#1A1A1A'
+    const rMuted = rText + '99'
     const idx = b.receipts.findIndex((x) => x.id === r.id)
     const orderNum = `#${String(idx + 1).padStart(4, '0')}`
     const cardNum = `**** **** **** ${1000 + (r.id % 9000)}`
@@ -821,35 +863,35 @@ export default function Home() {
           </div>
         )}
         <div style={{ padding: 20 }}>
-          <div ref={receiptRef} style={{ background: '#fff', border: `0.5px solid ${C.border}`, borderRadius: 3, padding: '24px 18px', fontFamily: C.receipt }}>
-            <div style={{ textAlign: 'center', fontSize: 15, letterSpacing: '0.3em', color: '#bbb', marginBottom: 14 }}>° ✦ ☆ ✦ °</div>
-            <div style={{ textAlign: 'center', fontSize: 15, fontWeight: 700, color: '#1A1A1A', marginBottom: 4 }}>{b.title}</div>
-            <div style={{ textAlign: 'center', fontSize: 11, letterSpacing: '0.1em', color: '#999', marginBottom: 13 }}>{b.author} · {b.publisher}</div>
-            <div style={{ textAlign: 'center', fontSize: 12, color: '#1A1A1A', marginBottom: 3 }}>ORDER {orderNum} FOR {r.nickname} ☆</div>
-            <div style={{ textAlign: 'center', fontSize: 11, color: '#aaa' }}>{r.date}</div>
+          <div ref={receiptRef} style={{ background: rBg, border: `0.5px solid rgba(0,0,0,0.08)`, borderRadius: 3, padding: '24px 18px', fontFamily: C.receipt }}>
+            <div style={{ textAlign: 'center', fontSize: 15, letterSpacing: '0.3em', color: rMuted, marginBottom: 14 }}>° ✦ ☆ ✦ °</div>
+            <div style={{ textAlign: 'center', fontSize: 15, fontWeight: 700, color: rText, marginBottom: 4 }}>{b.title}</div>
+            <div style={{ textAlign: 'center', fontSize: 11, letterSpacing: '0.1em', color: rMuted, marginBottom: 13 }}>{b.author} · {b.publisher}</div>
+            <div style={{ textAlign: 'center', fontSize: 12, color: rText, marginBottom: 3 }}>ORDER {orderNum} FOR {r.nickname} ☆</div>
+            <div style={{ textAlign: 'center', fontSize: 11, color: rMuted }}>{r.date}</div>
             <Divider />
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, letterSpacing: '0.08em', color: '#aaa', marginBottom: 10 }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, letterSpacing: '0.08em', color: rMuted, marginBottom: 10 }}>
               <span>NO</span><span style={{ flex: 1, textAlign: 'left', paddingLeft: 8 }}>SENTENCE</span><span>PAGE</span>
             </div>
             {r.quotes.map((q, i) => (
-              <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'flex-start', fontSize: 13, lineHeight: 1.7, color: '#1A1A1A' }}>
-                <span style={{ minWidth: 22, color: '#aaa', fontSize: 11, flexShrink: 0 }}>{String(i + 1).padStart(2, '0')}</span>
+              <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'flex-start', fontSize: 13, lineHeight: 1.7, color: rText }}>
+                <span style={{ minWidth: 22, color: rMuted, fontSize: 11, flexShrink: 0 }}>{String(i + 1).padStart(2, '0')}</span>
                 <span style={{ flex: 1 }}>{q.text}</span>
-                <span style={{ fontSize: 11, color: '#aaa', whiteSpace: 'nowrap', flexShrink: 0 }}>p.{q.page || '—'}</span>
+                <span style={{ fontSize: 11, color: rMuted, whiteSpace: 'nowrap', flexShrink: 0 }}>p.{q.page || '—'}</span>
               </div>
             ))}
             <Divider />
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, lineHeight: 2.2, color: '#1A1A1A' }}><span>ITEM COUNT</span><span>{r.quotes.length}</span></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 700, color: '#1A1A1A' }}><span>TOTAL</span><span>{r.quotes.length}개의 문장</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, lineHeight: 2.2, color: rText }}><span>ITEM COUNT</span><span>{r.quotes.length}</span></div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 700, color: rText }}><span>TOTAL</span><span>{r.quotes.length}개의 문장</span></div>
             <Divider />
-            <div style={{ fontSize: 12, lineHeight: 2.3, color: '#1A1A1A' }}>
+            <div style={{ fontSize: 12, lineHeight: 2.3, color: rText }}>
               <div>CARD #: {cardNum}</div>
               <div>AUTH CODE: {authCode}</div>
               <div>CARDHOLDER: {r.nickname} ☆</div>
             </div>
             <Divider />
             <Barcode seed={r.id} />
-            <div style={{ textAlign: 'center', fontSize: 10, letterSpacing: '0.18em', color: '#ccc', marginTop: 10 }}>THANK YOU FOR READING!</div>
+            <div style={{ textAlign: 'center', fontSize: 10, letterSpacing: '0.18em', color: rMuted, marginTop: 10 }}>THANK YOU FOR READING!</div>
           </div>
           <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
             <button onClick={saveAsImage} style={btnSolid}>이미지로 저장하기 ↓</button>
