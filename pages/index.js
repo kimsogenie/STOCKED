@@ -230,6 +230,7 @@ export default function Home() {
   const [searching, setSearching] = useState(false)
   const [nickname, setNickname] = useState('')
   const [isAddingBook, setIsAddingBook] = useState(false)
+  const [imgPreview, setImgPreview] = useState(null)
   const [quotes, setQuotes] = useState([{ text: '', page: '' }])
   const [editingField, setEditingField] = useState(null)
   const receiptRef = useRef(null)
@@ -448,12 +449,7 @@ export default function Home() {
       const dataUrl = canvas.toDataURL('image/png')
       const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
       if (isIOS) {
-        const w = window.open('')
-        w.document.write('<html><body style="margin:0;background:#f5f2ec">')
-        w.document.write('<p style="font-family:sans-serif;font-size:13px;padding:12px 16px;color:#666">이미지를 길게 눌러 사진으로 저장하세요</p>')
-        w.document.write('<img src="' + dataUrl + '" style="max-width:100%;display:block"/>')
-        w.document.write('</body></html>')
-        w.document.close()
+        setImgPreview(dataUrl)
       } else {
         const link = document.createElement('a')
         link.download = `stocked_${selectedBook.title}_${selectedReceipt.date}.png`
@@ -580,7 +576,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.0.4
+          © kimsogenie · v.1.0.5
         </div>
       </div>
     )
@@ -792,6 +788,18 @@ export default function Home() {
             <button onClick={() => setView('detail')} style={btnOutline}>영수증 목록으로</button>
           </div>
         </div>
+      </div>
+    )
+  }
+
+  if (imgPreview) {
+    return (
+      <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 }}>
+        <div style={{ fontSize: 13, color: '#fff', marginBottom: 14, fontFamily: C.mono, letterSpacing: '0.05em', textAlign: 'center' }}>
+          이미지를 <strong>길게 눌러</strong> 사진 앱에 저장하세요
+        </div>
+        <img src={imgPreview} style={{ maxWidth: '100%', maxHeight: '70vh', objectFit: 'contain', borderRadius: 4 }} />
+        <button onClick={() => setImgPreview(null)} style={{ marginTop: 20, background: 'none', border: '1px solid rgba(255,255,255,0.4)', color: '#fff', padding: '10px 28px', fontSize: 13, cursor: 'pointer', fontFamily: C.mono, borderRadius: 2 }}>닫기</button>
       </div>
     )
   }
