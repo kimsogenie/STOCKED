@@ -498,6 +498,18 @@ export default function Home() {
     )
   }
 
+  if (imgPreview) {
+    return (
+      <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 }}>
+        <div style={{ fontSize: 13, color: '#fff', marginBottom: 14, fontFamily: C.mono, letterSpacing: '0.05em', textAlign: 'center' }}>
+          이미지를 <strong>길게 눌러</strong> 사진 앱에 저장하세요
+        </div>
+        <img src={imgPreview} style={{ maxWidth: '100%', maxHeight: '70vh', objectFit: 'contain', borderRadius: 4 }} />
+        <button onClick={() => setImgPreview(null)} style={{ marginTop: 20, background: 'none', border: '1px solid rgba(255,255,255,0.4)', color: '#fff', padding: '10px 28px', fontSize: 13, cursor: 'pointer', fontFamily: C.mono, borderRadius: 2 }}>닫기</button>
+      </div>
+    )
+  }
+
   if (loading) {
     return (
       <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -576,7 +588,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.0.5
+          © kimsogenie · v.1.0.6
         </div>
       </div>
     )
@@ -788,18 +800,6 @@ export default function Home() {
             <button onClick={() => setView('detail')} style={btnOutline}>영수증 목록으로</button>
           </div>
         </div>
-      </div>
-    )
-  }
-
-  if (imgPreview) {
-    return (
-      <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 20 }}>
-        <div style={{ fontSize: 13, color: '#fff', marginBottom: 14, fontFamily: C.mono, letterSpacing: '0.05em', textAlign: 'center' }}>
-          이미지를 <strong>길게 눌러</strong> 사진 앱에 저장하세요
-        </div>
-        <img src={imgPreview} style={{ maxWidth: '100%', maxHeight: '70vh', objectFit: 'contain', borderRadius: 4 }} />
-        <button onClick={() => setImgPreview(null)} style={{ marginTop: 20, background: 'none', border: '1px solid rgba(255,255,255,0.4)', color: '#fff', padding: '10px 28px', fontSize: 13, cursor: 'pointer', fontFamily: C.mono, borderRadius: 2 }}>닫기</button>
       </div>
     )
   }
