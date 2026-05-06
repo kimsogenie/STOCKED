@@ -240,7 +240,13 @@ export default function Home() {
       else setLoading(false)
     })
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) { setUser(session.user); setIsGuest(false); loadBooks(session.user.id); checkOnboarding() }
+      if (session?.user) {
+        const isNew = !user
+        setUser(session.user); setIsGuest(false); loadBooks(session.user.id); checkOnboarding()
+        if (isNew && typeof gtag !== 'undefined') {
+          gtag('event', _event === 'SIGNED_IN' ? 'login' : 'sign_up', { method: 'Google' })
+        }
+      }
       else { setUser(null); setBooks([]); setLoading(false) }
     })
     return () => subscription.unsubscribe()
@@ -302,6 +308,7 @@ export default function Home() {
   }
 
   const enterAsGuest = () => {
+    if (typeof gtag !== 'undefined') gtag('event', 'guest_mode')
     setIsGuest(true)
     const saved = localStorage.getItem('stocked_books')
     if (saved) setBooks(JSON.parse(saved))
@@ -378,6 +385,7 @@ export default function Home() {
     setView('library')
     setSearchQuery('')
     setSearchResults([])
+    if (typeof gtag !== 'undefined') gtag('event', 'add_book', { book_title: kakaoBook.title })
     } finally {
       setIsAddingBook(false)
     }
@@ -401,6 +409,7 @@ export default function Home() {
     }
     setSelectedBook(updated.find((b) => b.id === selectedBook.id))
     setSelectedReceipt(newReceipt)
+    if (typeof gtag !== 'undefined') gtag('event', 'generate_receipt')
     setView('receipt')
   }
 
@@ -571,7 +580,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.0.3
+          © kimsogenie · v.1.0.4
         </div>
       </div>
     )
