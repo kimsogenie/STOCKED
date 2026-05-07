@@ -53,8 +53,14 @@ function getSpineTitle(title) {
 }
 
 // [핵심 수정 1] 제목이 넘치지 않도록 코드 단에서 강제 컷팅 (안전장치)
+function getSpineHeight(bookId) {
+  const variation = (bookId % 7) * 4
+  return 130 + variation // 130~154px 사이
+}
+
 function BookSpine({ b, onClick }) {
   const w = getSpineWidth(b.pages)
+  const h = getSpineHeight(b.id)
   const fp = FONT_PAIRS[b.fp % FONT_PAIRS.length]
   const tc = b.spineText || '#1A1A1A'
 
@@ -63,7 +69,7 @@ function BookSpine({ b, onClick }) {
       onClick={onClick}
       style={{
         width: w,
-        height: 150,
+        height: h,
         background: b.bg,
         borderRight: '2px solid rgba(0,0,0,0.06)',
         display: 'flex',
@@ -134,6 +140,35 @@ function Barcode({ seed }) {
   )
 }
 
+function ManualBookForm({ onAdd }) {
+  const [title, setTitle] = useState('')
+  const [author, setAuthor] = useState('')
+  const [publisher, setPublisher] = useState('')
+  const [open, setOpen] = useState(false)
+
+  const handleSubmit = () => {
+    if (!title.trim()) return alert('제목을 입력해주세요')
+    onAdd({ title: title.trim(), authors: author ? [author.trim()] : [], publisher: publisher.trim(), isbn: '', thumbnail: '' })
+  }
+
+  if (!open) return (
+    <button onClick={() => setOpen(true)} style={{ background: 'none', border: `0.5px dashed rgba(0,0,0,0.2)`, width: '100%', padding: '12px', fontSize: 12, color: C.muted, cursor: 'pointer', fontFamily: C.font }}>
+      + 직접 입력하기
+    </button>
+  )
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+      <input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="책 제목 *" style={{ width: '100%', padding: '11px 12px', fontSize: 14, border: `0.5px solid rgba(0,0,0,0.2)`, background: 'transparent', fontFamily: C.font, outline: 'none', boxSizing: 'border-box' }} />
+      <input value={author} onChange={(e) => setAuthor(e.target.value)} placeholder="저자 (선택)" style={{ width: '100%', padding: '11px 12px', fontSize: 14, border: `0.5px solid rgba(0,0,0,0.2)`, background: 'transparent', fontFamily: C.font, outline: 'none', boxSizing: 'border-box' }} />
+      <input value={publisher} onChange={(e) => setPublisher(e.target.value)} placeholder="출판사 (선택)" style={{ width: '100%', padding: '11px 12px', fontSize: 14, border: `0.5px solid rgba(0,0,0,0.2)`, background: 'transparent', fontFamily: C.font, outline: 'none', boxSizing: 'border-box' }} />
+      <button onClick={handleSubmit} style={{ width: '100%', padding: '13px', fontSize: 13, border: 'none', background: C.text, color: C.bg, cursor: 'pointer', fontFamily: C.font }}>
+        서재에 추가하기
+      </button>
+    </div>
+  )
+}
+
 function NavBar({ onBack, title, right }) {
   return (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 20px', borderBottom: `0.5px solid ${C.border}` }}>
@@ -149,31 +184,62 @@ function Divider() {
 }
 
 
-function BookShelf({ books, onBookClick, onAddClick }) {
+function BookShelf({ books, onBookClick, onAddClick, sortBy, setSortBy }) {
+  const sortOptions = [
+    { value: 'default', label: '추가순' },
+    { value: 'year', label: '연도별' },
+    { value: 'month', label: '월별' },
+  ]
+
+  const grouped = (() => {
+    if (sortBy === 'default') return [{ label: null, books }]
+    const map = {}
+    books.forEach(b => {
+      const date = b.readDate || ''
+      const key = sortBy === 'year' ? date.slice(0, 4) : date.slice(0, 7)
+      if (!map[key]) map[key] = []
+      map[key].push(b)
+    })
+    return Object.entries(map).sort((a, b) => b[0].localeCompare(a[0])).map(([k, v]) => ({ label: k, books: v }))
+  })()
+
   return (
-    <div style={{ background: C.bgShelf, padding: '20px 16px 8px' }}>
-      <div style={{
-        display: 'flex',
-        flexWrap: 'wrap',
-        gap: 2,
-        alignItems: 'flex-end',
-        minHeight: SPINE_H + 20,
-      }}>
-        {books.map((b) => (
-          <BookSpine key={b.id} b={b} onClick={() => onBookClick(b)} />
+    <div style={{ background: C.bgShelf }}>
+      {/* 정렬 탭 */}
+      <div style={{ display: 'flex', gap: 0, padding: '10px 16px 0', borderBottom: `0.5px solid ${C.border}` }}>
+        {sortOptions.map(o => (
+          <button key={o.value} onClick={() => setSortBy(o.value)} style={{
+            background: 'none', border: 'none', borderBottom: sortBy === o.value ? `2px solid ${C.text}` : '2px solid transparent',
+            padding: '6px 12px', fontSize: 11, cursor: 'pointer', fontFamily: C.mono,
+            color: sortBy === o.value ? C.text : C.muted, letterSpacing: '0.05em',
+          }}>{o.label}</button>
         ))}
-        <div
-          onClick={onAddClick}
-          style={{
-            width: 32, height: SPINE_H,
-            border: `1px dashed ${C.borderMid}`,
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            cursor: 'pointer', flexShrink: 0,
-            color: C.muted, fontSize: 18,
-            alignSelf: 'flex-end',
-          }}
-        >+</div>
       </div>
+
+      {grouped.map((group, gi) => (
+        <div key={gi}>
+          {group.label && (
+            <div style={{ padding: '14px 16px 6px', fontSize: 10, letterSpacing: '0.12em', color: C.muted, fontFamily: C.mono }}>
+              {group.label}
+            </div>
+          )}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 2, alignItems: 'flex-end', minHeight: 120, padding: '16px 16px 12px' }}>
+            {group.books.map((b) => (
+              <BookSpine key={b.id} b={b} onClick={() => onBookClick(b)} />
+            ))}
+            {gi === grouped.length - 1 && (
+              <div onClick={onAddClick} style={{
+                width: 32, height: 130,
+                border: `1px dashed ${C.borderMid}`,
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                cursor: 'pointer', flexShrink: 0,
+                color: C.muted, fontSize: 18,
+                alignSelf: 'flex-end',
+              }}>+</div>
+            )}
+          </div>
+        </div>
+      ))}
     </div>
   )
 }
@@ -247,6 +313,7 @@ export default function Home() {
   const [errorModal, setErrorModal] = useState(false)
   const [errorText, setErrorText] = useState('')
   const [errorSending, setErrorSending] = useState(false)
+  const [sortBy, setSortBy] = useState('default') // default | year | month
   const [quotes, setQuotes] = useState([{ text: '', page: '' }])
   const [editingField, setEditingField] = useState(null)
   const receiptRef = useRef(null)
@@ -493,21 +560,56 @@ export default function Home() {
   }
 
   if (!user && !isGuest && !loading) {
+    // 미니 영수증 프리뷰 컴포넌트
+    const PreviewReceipt = () => (
+      <div style={{ background: '#fff', border: `0.5px solid rgba(0,0,0,0.1)`, borderRadius: 3, padding: '16px 14px', fontFamily: C.receipt, width: '100%', boxSizing: 'border-box', transform: 'rotate(-1.5deg)', boxShadow: '2px 4px 16px rgba(0,0,0,0.10)' }}>
+        <div style={{ textAlign: 'center', fontSize: 10, letterSpacing: '0.25em', color: '#ccc', marginBottom: 8 }}>° ✦ ☆ ✦ °</div>
+        <div style={{ textAlign: 'center', fontSize: 12, fontWeight: 700, color: '#1A1A1A', marginBottom: 2 }}>채식주의자</div>
+        <div style={{ textAlign: 'center', fontSize: 9, color: '#aaa', marginBottom: 10, letterSpacing: '0.05em' }}>한강 · 창비</div>
+        <div style={{ borderTop: '1px dashed rgba(0,0,0,0.1)', margin: '8px 0' }} />
+        <div style={{ fontSize: 10, color: '#1A1A1A', lineHeight: 1.7, marginBottom: 4 }}>
+          <span style={{ color: '#aaa', marginRight: 6 }}>01</span>
+          나는 아무도 해치고 싶지 않아요. 그게 다예요.
+        </div>
+        <div style={{ borderTop: '1px dashed rgba(0,0,0,0.1)', margin: '8px 0' }} />
+        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: '#1A1A1A' }}>
+          <span>TOTAL</span><span>1개의 문장</span>
+        </div>
+        <div style={{ fontSize: 9, color: '#aaa', marginTop: 4 }}>CARDHOLDER: sow ☆</div>
+      </div>
+    )
+
     return (
       <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg, display: 'flex', flexDirection: 'column' }}>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', padding: '40px 32px' }}>
-          <img src="/logo.png" alt="STOCKED" style={{ height: 40, marginBottom: 16, objectFit: 'contain' }} />
-          <div style={{ fontSize: 13, color: C.muted, marginBottom: 56, fontFamily: C.font, letterSpacing: '0.05em' }}>나의 책장과 명대사 영수증</div>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '52px 32px 40px' }}>
+          {/* 헤더 */}
+          <div style={{ marginBottom: 36 }}>
+            <img src="/logo.png" alt="STOCKED" style={{ height: 32, marginBottom: 12, objectFit: 'contain' }} />
+            <div style={{ fontSize: 22, fontWeight: 700, color: C.text, fontFamily: C.font, lineHeight: 1.35, marginBottom: 8 }}>
+              읽은 책을 서재에 꽂고<br />명대사를 영수증으로
+            </div>
+            <div style={{ fontSize: 13, color: C.muted, fontFamily: C.font, lineHeight: 1.7 }}>
+              책 spine이 쌓이는 나만의 서재를 만들고,<br />기억하고 싶은 문장을 영수증으로 저장하세요.
+            </div>
+          </div>
+
+          {/* 영수증 미리보기 */}
+          <div style={{ marginBottom: 40, padding: '0 12px' }}>
+            <PreviewReceipt />
+          </div>
+
+          {/* 버튼 */}
           <div style={{ width: '100%', marginBottom: 10 }}>
             <button onClick={loginWithGoogle} style={{ ...btnOutline, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+              <svg width="18" height="18" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
               Google로 로그인
             </button>
           </div>
-          <div style={{ width: '100%', marginBottom: 32 }}>
+          <div style={{ width: '100%', marginBottom: 24 }}>
             <button onClick={enterAsGuest} style={btnSolid}>로그인 없이 이용하기</button>
           </div>
-          <div style={{ fontSize: 12, color: C.faint, textAlign: 'center', fontFamily: C.font, lineHeight: 1.9 }}>
-            로그인하면 어느 기기에서든<br />내 서재를 계속 볼 수 있어요
+          <div style={{ fontSize: 11, color: C.faint, textAlign: 'center', fontFamily: C.font, lineHeight: 1.9 }}>
+            로그인하면 어느 기기에서든 내 서재를 볼 수 있어요
           </div>
         </div>
       </div>
@@ -642,6 +744,8 @@ export default function Home() {
           books={books}
           onBookClick={(b) => { setSelectedBook(b); setView('detail') }}
           onAddClick={() => setView('search')}
+          sortBy={sortBy}
+          setSortBy={setSortBy}
         />
 
         {books.length === 0 && (
@@ -652,7 +756,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.0.8
+          © kimsogenie · v.1.0.9
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
@@ -687,6 +791,11 @@ export default function Home() {
               </div>
             </div>
           ))}
+          {/* 직접 입력 */}
+          <div style={{ marginTop: 24, borderTop: `0.5px solid ${C.border}`, paddingTop: 20 }}>
+            <div style={{ fontSize: 11, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em', marginBottom: 14 }}>검색이 안 된다면 직접 입력해보세요</div>
+            <ManualBookForm onAdd={addBook} />
+          </div>
         </div>
       </div>
     )
@@ -863,35 +972,45 @@ export default function Home() {
           </div>
         )}
         <div style={{ padding: 20 }}>
-          <div ref={receiptRef} style={{ background: rBg, border: `0.5px solid rgba(0,0,0,0.08)`, borderRadius: 3, padding: '24px 18px', fontFamily: C.receipt }}>
-            <div style={{ textAlign: 'center', fontSize: 15, letterSpacing: '0.3em', color: rMuted, marginBottom: 14 }}>° ✦ ☆ ✦ °</div>
-            <div style={{ textAlign: 'center', fontSize: 15, fontWeight: 700, color: rText, marginBottom: 4 }}>{b.title}</div>
-            <div style={{ textAlign: 'center', fontSize: 11, letterSpacing: '0.1em', color: rMuted, marginBottom: 13 }}>{b.author} · {b.publisher}</div>
-            <div style={{ textAlign: 'center', fontSize: 12, color: rText, marginBottom: 3 }}>ORDER {orderNum} FOR {r.nickname} ☆</div>
-            <div style={{ textAlign: 'center', fontSize: 11, color: rMuted }}>{r.date}</div>
-            <Divider />
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 10, letterSpacing: '0.08em', color: rMuted, marginBottom: 10 }}>
-              <span>NO</span><span style={{ flex: 1, textAlign: 'left', paddingLeft: 8 }}>SENTENCE</span><span>PAGE</span>
+          <div ref={receiptRef} style={{ background: rBg, border: `0.5px solid rgba(0,0,0,0.08)`, borderRadius: 3, padding: '28px 20px', fontFamily: C.receipt }}>
+            {/* 상단 장식 */}
+            <div style={{ textAlign: 'center', fontSize: 13, letterSpacing: '0.3em', color: rMuted, marginBottom: 18 }}>° ✦ ☆ ✦ °</div>
+            {/* 책 제목 크게 */}
+            <div style={{ textAlign: 'center', fontSize: 20, fontWeight: 700, color: rText, marginBottom: 4, lineHeight: 1.3 }}>{b.title}</div>
+            <div style={{ textAlign: 'center', fontSize: 10, letterSpacing: '0.12em', color: rMuted, marginBottom: 18 }}>{b.author} · {b.publisher}</div>
+            {/* ORDER 정보 */}
+            <div style={{ background: rText + '11', borderRadius: 2, padding: '8px 12px', marginBottom: 16, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: 10, letterSpacing: '0.1em', color: rText, fontWeight: 700 }}>ORDER {orderNum}</span>
+              <span style={{ fontSize: 10, color: rMuted }}>{r.date}</span>
             </div>
+            {/* 명대사 헤더 */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, letterSpacing: '0.1em', color: rMuted, marginBottom: 10, borderBottom: `1px dashed ${rText}22`, paddingBottom: 6 }}>
+              <span>NO</span><span style={{ flex: 1, textAlign: 'left', paddingLeft: 10 }}>SENTENCE</span><span>PAGE</span>
+            </div>
+            {/* 명대사 목록 */}
             {r.quotes.map((q, i) => (
-              <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8, alignItems: 'flex-start', fontSize: 13, lineHeight: 1.7, color: rText }}>
-                <span style={{ minWidth: 22, color: rMuted, fontSize: 11, flexShrink: 0 }}>{String(i + 1).padStart(2, '0')}</span>
-                <span style={{ flex: 1 }}>{q.text}</span>
-                <span style={{ fontSize: 11, color: rMuted, whiteSpace: 'nowrap', flexShrink: 0 }}>p.{q.page || '—'}</span>
+              <div key={i} style={{ display: 'flex', gap: 10, marginBottom: 12, alignItems: 'flex-start', paddingBottom: 12, borderBottom: i < r.quotes.length - 1 ? `1px dashed ${rText}15` : 'none' }}>
+                <span style={{ minWidth: 20, color: rMuted, fontSize: 10, flexShrink: 0, marginTop: 2 }}>{String(i + 1).padStart(2, '0')}</span>
+                <span style={{ flex: 1, fontSize: 13, lineHeight: 1.8, color: rText }}>{q.text}</span>
+                <span style={{ fontSize: 10, color: rMuted, whiteSpace: 'nowrap', flexShrink: 0, marginTop: 2 }}>p.{q.page || '—'}</span>
               </div>
             ))}
-            <Divider />
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, lineHeight: 2.2, color: rText }}><span>ITEM COUNT</span><span>{r.quotes.length}</span></div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 12, fontWeight: 700, color: rText }}><span>TOTAL</span><span>{r.quotes.length}개의 문장</span></div>
-            <Divider />
-            <div style={{ fontSize: 12, lineHeight: 2.3, color: rText }}>
+            {/* 합계 */}
+            <div style={{ borderTop: `1px dashed ${rText}33`, paddingTop: 12, marginTop: 4 }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 11, lineHeight: 2, color: rMuted }}><span>ITEM COUNT</span><span>{r.quotes.length}</span></div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 13, fontWeight: 700, color: rText }}><span>TOTAL</span><span>{r.quotes.length}개의 문장</span></div>
+            </div>
+            {/* 카드 정보 */}
+            <div style={{ borderTop: `1px dashed ${rText}33`, marginTop: 12, paddingTop: 12, fontSize: 11, lineHeight: 2.2, color: rMuted }}>
               <div>CARD #: {cardNum}</div>
               <div>AUTH CODE: {authCode}</div>
-              <div>CARDHOLDER: {r.nickname} ☆</div>
+              <div style={{ color: rText, fontWeight: 700 }}>CARDHOLDER: {r.nickname} ☆</div>
             </div>
-            <Divider />
-            <Barcode seed={r.id} />
-            <div style={{ textAlign: 'center', fontSize: 10, letterSpacing: '0.18em', color: rMuted, marginTop: 10 }}>THANK YOU FOR READING!</div>
+            {/* 바코드 */}
+            <div style={{ borderTop: `1px dashed ${rText}33`, marginTop: 12, paddingTop: 16 }}>
+              <Barcode seed={r.id} />
+              <div style={{ textAlign: 'center', fontSize: 9, letterSpacing: '0.2em', color: rMuted, marginTop: 10 }}>THANK YOU FOR READING!</div>
+            </div>
           </div>
           <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 10 }}>
             <button onClick={saveAsImage} style={btnSolid}>이미지로 저장하기 ↓</button>
