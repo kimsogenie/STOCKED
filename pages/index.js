@@ -352,6 +352,7 @@ export default function Home() {
       id: b.id, title: b.title, author: b.author, publisher: b.publisher,
       thumbnail: b.thumbnail, readDate: b.read_date, pages: b.pages,
       h: b.h, bg: b.bg, spineText: b.spine_text, fp: b.fp, receipts: b.receipts || [],
+      status: b.status || 'read',
     })))
     setLoading(false)
   }
@@ -369,7 +370,7 @@ export default function Home() {
         id: newBook.id, user_id: user.id, title: newBook.title, author: newBook.author,
         publisher: newBook.publisher, thumbnail: newBook.thumbnail, read_date: newBook.readDate,
         pages: newBook.pages, h: newBook.h, bg: newBook.bg, spine_text: newBook.spineText,
-        fp: newBook.fp, receipts: newBook.receipts,
+        fp: newBook.fp, receipts: newBook.receipts, status: newBook.status || 'read',
       })
     }
   }
@@ -756,7 +757,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.0.9
+          © kimsogenie · v.1.1.0
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
@@ -853,6 +854,22 @@ export default function Home() {
           </div>
         </div>
         <div style={{ padding: '16px 20px', borderBottom: `0.5px solid ${C.border}` }}>
+          {/* 상태 태그 */}
+          <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+            {[
+              { value: 'reading', label: '📖 읽는 중' },
+              { value: 'read', label: '✅ 읽음' },
+              { value: 'want', label: '🔖 읽고 싶어요' },
+            ].map(s => (
+              <button key={s.value} onClick={() => updateBook(b.id, 'status', s.value)} style={{
+                background: b.status === s.value ? C.text : 'transparent',
+                color: b.status === s.value ? C.bg : C.muted,
+                border: `0.5px solid ${b.status === s.value ? C.text : C.borderMid}`,
+                borderRadius: 20, padding: '4px 10px', fontSize: 11,
+                cursor: 'pointer', fontFamily: C.font,
+              }}>{s.label}</button>
+            ))}
+          </div>
           <button onClick={() => {
             const saved = localStorage.getItem('stocked_nickname') || ''
             setNickname(saved)
@@ -861,6 +878,15 @@ export default function Home() {
             setQuotes([{ text: '', page: '' }])
             setView('form')
           }} style={{ ...btnSolid, marginBottom: 8 }}>영수증 발급하기 →</button>
+          <button onClick={() => {
+            const url = `${window.location.origin}/shelf/${user?.id || 'guest'}`
+            if (navigator.share) {
+              navigator.share({ title: 'STOCKED — 나의 서재', url })
+            } else {
+              navigator.clipboard.writeText(url)
+              alert('서재 링크가 복사됐어요!')
+            }
+          }} style={{ ...btnOutline, marginBottom: 8 }}>내 서재 공유하기 🔗</button>
           <button onClick={() => deleteBook(b.id)} style={{ ...btnOutline, fontSize: 12, color: 'rgba(180,50,50,0.7)', borderColor: 'rgba(180,50,50,0.25)' }}>서재에서 삭제</button>
         </div>
         <div style={{ padding: 20 }}>
