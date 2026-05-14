@@ -974,6 +974,7 @@ export default function Home() {
               ))}
             </div>
           </div>
+          <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginTop: 14 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: 11, color: C.muted, fontFamily: C.mono }}>배경</span>
               <input type="color" value={receiptBg} onChange={(e) => setReceiptBg(e.target.value)} style={{ width: 32, height: 28, border: `0.5px solid ${C.borderMid}`, padding: 2, cursor: 'pointer', background: 'none' }} />
