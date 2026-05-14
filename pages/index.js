@@ -467,15 +467,26 @@ export default function Home() {
       }
     } catch {}
 
-    // 2. 표지 컬러 추출 → fallback: 고정 팔레트
-    let colorSet = SPINE_COLORS[books.length % SPINE_COLORS.length]
-    if (kakaoBook.thumbnail) {
-      try {
-        const r = await fetch(`/api/book-color?url=${encodeURIComponent(kakaoBook.thumbnail)}`)
-        const { bg, text } = await r.json()
-        if (bg && text) colorSet = { bg, text }
-      } catch {}
-    }
+    // 2. 표지 컬러 추출 → 타이틀 해시 기반 고유 파스텔 컬러
+    const colorSet = (() => {
+      const str = (kakaoBook.title || '') + (kakaoBook.authors?.[0] || '')
+      let hash = 0
+      for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash)
+      const h = Math.abs(hash) % 360
+      const s = 30 + (Math.abs(hash >> 8) % 20)
+      const l = 78 + (Math.abs(hash >> 16) % 10)
+      const hslToRgb = (h, s, l) => {
+        s /= 100; l /= 100
+        const k = n => (n + h / 30) % 12
+        const a = s * Math.min(l, 1 - l)
+        const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)))
+        return [Math.round(f(0)*255), Math.round(f(8)*255), Math.round(f(4)*255)]
+      }
+      const [r, g, b] = hslToRgb(h, s, l)
+      const tl = 22 + (Math.abs(hash >> 4) % 15)
+      const [tr, tg, tb] = hslToRgb(h, 45, tl)
+      return { bg: `rgb(${r},${g},${b})`, text: `rgb(${tr},${tg},${tb})` }
+    })()
 
     const newBook = {
       id: Date.now(), title: kakaoBook.title, author: kakaoBook.authors?.join(', ') || '',
@@ -557,24 +568,29 @@ export default function Home() {
     setSelectedBook(updated.find((b) => b.id === selectedBook.id))
   }
 
-  const loadNotes = async (isbn, title) => {
-    const key = isbn || title
-    if (!key) return
-    const { data } = await supabase.from('notes').select('*').eq('book_key', key).order('created_at', { ascending: false })
-    if (data) setNotes(data)
+  const loadNotes = async (title) => {
+    if (!title) return
+    const { data, error } = await supabase.from('notes').select('*').eq('book_key', title).order('created_at', { ascending: false })
+    if (!error && data) setNotes(data)
   }
 
   const submitNote = async () => {
     if (!noteText.trim()) return
     setNoteSending(true)
-    const key = selectedBook?.isbn || selectedBook?.title
+    const key = selectedBook?.title
     const nick = noteNick.trim() || '익명'
-    await supabase.from('notes').insert({ book_key: key, book_title: selectedBook?.title, content: noteText.trim(), nickname: nick })
+    const { error } = await supabase.from('notes').insert({
+      book_key: key,
+      book_title: selectedBook?.title,
+      content: noteText.trim(),
+      nickname: nick,
+    })
+    if (error) { alert('저장 실패: ' + error.message); setNoteSending(false); return }
     setNoteText('')
     setNoteNick('')
     setNoteModal(false)
     setNoteSending(false)
-    await loadNotes(selectedBook?.isbn, selectedBook?.title)
+    await loadNotes(selectedBook?.title)
   }
 
   const addNoteReaction = async (noteId, emoji) => {
@@ -848,7 +864,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.1.2
+          © kimsogenie · v.1.1.3
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
@@ -1003,7 +1019,7 @@ export default function Home() {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
             <div style={{ fontSize: 10, letterSpacing: '0.14em', color: C.muted, textTransform: 'uppercase', fontFamily: C.mono }}>이 책의 익명 쪽지</div>
             <button onClick={async () => {
-              if (!showNotes) await loadNotes(b.isbn, b.title)
+              if (!showNotes) await loadNotes(b.title)
               setShowNotes(!showNotes)
             }} style={{ background: 'none', border: `0.5px solid ${C.borderMid}`, padding: '4px 10px', fontSize: 11, cursor: 'pointer', fontFamily: C.mono, color: C.muted }}>
               {showNotes ? '접기 ∧' : '펼치기 ∨'}
