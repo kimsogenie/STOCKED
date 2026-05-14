@@ -383,7 +383,7 @@ export default function Home() {
       id: b.id, title: b.title, author: b.author, publisher: b.publisher,
       thumbnail: b.thumbnail, readDate: b.read_date, pages: b.pages,
       h: b.h, bg: b.bg, spineText: b.spine_text, fp: b.fp, receipts: b.receipts || [],
-      status: b.status || 'read',
+      status: b.status || 'read', rating: b.rating || 0,
     })))
     setLoading(false)
   }
@@ -401,7 +401,7 @@ export default function Home() {
         id: newBook.id, user_id: user.id, title: newBook.title, author: newBook.author,
         publisher: newBook.publisher, thumbnail: newBook.thumbnail, read_date: newBook.readDate,
         pages: newBook.pages, h: newBook.h, bg: newBook.bg, spine_text: newBook.spineText,
-        fp: newBook.fp, receipts: newBook.receipts, status: newBook.status || 'read',
+        fp: newBook.fp, receipts: newBook.receipts, status: newBook.status || 'read', rating: 0,
       })
     }
   }
@@ -864,7 +864,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.1.3
+          © kimsogenie · v.1.1.4
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
@@ -961,8 +961,8 @@ export default function Home() {
           </div>
         </div>
         <div style={{ padding: '16px 20px', borderBottom: `0.5px solid ${C.border}` }}>
-          {/* 상태 태그 */}
-          <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
+          {/* 상태 태그 + 별점 */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 12 }}>
             {[
               { value: 'reading', label: '📖 읽는 중' },
               { value: 'read', label: '✅ 읽음' },
@@ -976,6 +976,16 @@ export default function Home() {
                 cursor: 'pointer', fontFamily: C.font,
               }}>{s.label}</button>
             ))}
+          </div>
+          {/* 별점 */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 4 }}>
+            {[1,2,3,4,5].map(star => (
+              <span key={star} onClick={() => updateBook(b.id, 'rating', b.rating === star ? 0 : star)}
+                style={{ fontSize: 22, cursor: 'pointer', color: star <= (b.rating || 0) ? '#E8A020' : C.faint, lineHeight: 1 }}>
+                {star <= (b.rating || 0) ? '★' : '☆'}
+              </span>
+            ))}
+            {b.rating > 0 && <span style={{ fontSize: 11, color: C.muted, fontFamily: C.mono, marginLeft: 4 }}>{b.rating}.0</span>}
           </div>
           <button onClick={() => {
             const saved = localStorage.getItem('stocked_nickname') || ''
@@ -1131,23 +1141,7 @@ export default function Home() {
     const rBg = r.bg || '#ffffff'
     const rText = r.textColor || '#1A1A1A'
     const rMuted = rText + '99'
-    const decoDisplay = (() => {
-      const found = [
-        { value: 'default', display: '° ✦ ☆ ✦ °' },
-        { value: 'dino', display: '🦕 · · 🦕 · · 🦕' },
-        { value: 'cherry', display: '🍒 · · 🍒 · · 🍒' },
-        { value: 'bear', display: '🐻 · · 🐻 · · 🐻' },
-        { value: 'paw', display: '🐾 · · 🐾 · · 🐾' },
-        { value: 'letter', display: '✉️ · · ✉️ · · ✉️' },
-        { value: 'frog', display: '🐸 · · 🐸 · · 🐸' },
-        { value: 'person', display: '🧍 · · 🧍 · · 🧍' },
-        { value: 'sun', display: '☀️ · · ☀️ · · ☀️' },
-        { value: 'wind', display: '🌬️ · · 🌬️ · · 🌬️' },
-        { value: 'cat', display: '🐱 · · 🐱 · · 🐱' },
-        { value: 'dog', display: '🐶 · · 🐶 · · 🐶' },
-      ].find(d => d.value === r.deco)
-      return found ? found.display : '° ✦ ☆ ✦ °'
-    })()
+    const decoDisplay = RECEIPT_DECOS.find(d => d.value === r.deco)?.display || '° ✦ ☆ ✦ °'
     const idx = b.receipts.findIndex((x) => x.id === r.id)
     const orderNum = `#${String(idx + 1).padStart(4, '0')}`
     const cardNum = `**** **** **** ${1000 + (r.id % 9000)}`
