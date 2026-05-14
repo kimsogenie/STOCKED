@@ -54,13 +54,19 @@ function getSpineTitle(title) {
 
 // [핵심 수정 1] 제목이 넘치지 않도록 코드 단에서 강제 컷팅 (안전장치)
 function getSpineHeight(bookId) {
-  const variation = (bookId % 7) * 4
-  return 130 + variation // 130~154px 사이
+  const heights = [120, 140, 155, 130, 165, 145, 135, 170, 125, 150]
+  return heights[bookId % 10]
+}
+
+function getSpineTilt(bookId) {
+  const tilts = [0, 1.5, -1, 0, 2, -1.5, 0.5, -2, 1, 0]
+  return tilts[bookId % 10]
 }
 
 function BookSpine({ b, onClick }) {
   const w = getSpineWidth(b.pages)
   const h = getSpineHeight(b.id)
+  const tilt = getSpineTilt(b.id)
   const fp = FONT_PAIRS[b.fp % FONT_PAIRS.length]
   const tc = b.spineText || '#1A1A1A'
 
@@ -81,13 +87,16 @@ function BookSpine({ b, onClick }) {
         boxSizing: 'border-box',
         transition: 'transform 0.2s ease, box-shadow 0.2s ease',
         padding: '6px 3px',
+        transform: `rotate(${tilt}deg)`,
+        transformOrigin: 'bottom center',
+        alignSelf: 'flex-end',
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-8px)'
-        e.currentTarget.style.boxShadow = '0 6px 16px rgba(0,0,0,0.14)'
+        e.currentTarget.style.transform = `rotate(${tilt}deg) translateY(-10px)`
+        e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,0,0,0.16)'
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'translateY(0)'
+        e.currentTarget.style.transform = `rotate(${tilt}deg)`
         e.currentTarget.style.boxShadow = 'none'
       }}
     >
@@ -297,6 +306,22 @@ export default function Home() {
   const [nickname, setNickname] = useState('')
   const [receiptBg, setReceiptBg] = useState('#ffffff')
   const [receiptText, setReceiptText] = useState('#1A1A1A')
+  const [receiptDeco, setReceiptDeco] = useState('default')
+
+  const RECEIPT_DECOS = [
+    { value: 'default', label: '✦', display: '° ✦ ☆ ✦ °' },
+    { value: 'dino', label: '🦕', display: '🦕 · · 🦕 · · 🦕' },
+    { value: 'cherry', label: '🍒', display: '🍒 · · 🍒 · · 🍒' },
+    { value: 'bear', label: '🐻', display: '🐻 · · 🐻 · · 🐻' },
+    { value: 'paw', label: '🐾', display: '🐾 · · 🐾 · · 🐾' },
+    { value: 'letter', label: '✉️', display: '✉️ · · ✉️ · · ✉️' },
+    { value: 'frog', label: '🐸', display: '🐸 · · 🐸 · · 🐸' },
+    { value: 'person', label: '🧍', display: '🧍 · · 🧍 · · 🧍' },
+    { value: 'sun', label: '☀️', display: '☀️ · · ☀️ · · ☀️' },
+    { value: 'wind', label: '🌬️', display: '🌬️ · · 🌬️ · · 🌬️' },
+    { value: 'cat', label: '🐱', display: '🐱 · · 🐱 · · 🐱' },
+    { value: 'dog', label: '🐶', display: '🐶 · · 🐶 · · 🐶' },
+  ]
 
   const RECEIPT_THEMES = [
     { name: '클래식', bg: '#ffffff', text: '#1A1A1A' },
@@ -483,7 +508,7 @@ export default function Home() {
     if (!valid.length) return alert('명대사를 하나 이상 입력해주세요')
     const d = new Date()
     const dateStr = `${d.getFullYear()}.${String(d.getMonth() + 1).padStart(2, '0')}.${String(d.getDate()).padStart(2, '0')}`
-    const newReceipt = { id: Date.now(), date: dateStr, nickname, quotes: valid, bg: receiptBg, textColor: receiptText }
+    const newReceipt = { id: Date.now(), date: dateStr, nickname, quotes: valid, bg: receiptBg, textColor: receiptText, deco: receiptDeco }
     const updatedReceipts = [...selectedBook.receipts, newReceipt]
     const updated = books.map((b) => b.id === selectedBook.id ? { ...b, receipts: updatedReceipts } : b)
     setBooks(updated)
@@ -757,7 +782,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.1.0
+          © kimsogenie · v.1.1.1
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
@@ -875,6 +900,7 @@ export default function Home() {
             setNickname(saved)
             setReceiptBg('#ffffff')
             setReceiptText('#1A1A1A')
+            setReceiptDeco('default')
             setQuotes([{ text: '', page: '' }])
             setView('form')
           }} style={{ ...btnSolid, marginBottom: 8 }}>영수증 발급하기 →</button>
@@ -933,7 +959,21 @@ export default function Home() {
               </div>
             ))}
           </div>
-          <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
+          {/* 장식 선택 */}
+          <div style={{ marginTop: 14 }}>
+            <div style={{ fontSize: 10, letterSpacing: '0.1em', color: C.muted, fontFamily: C.mono, marginBottom: 8 }}>상단 장식</div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+              {RECEIPT_DECOS.map(d => (
+                <button key={d.value} onClick={() => setReceiptDeco(d.value)} style={{
+                  background: receiptDeco === d.value ? C.text : 'transparent',
+                  color: receiptDeco === d.value ? C.bg : C.text,
+                  border: `0.5px solid ${receiptDeco === d.value ? C.text : C.borderMid}`,
+                  borderRadius: 3, padding: '5px 10px', fontSize: 14,
+                  cursor: 'pointer', lineHeight: 1,
+                }}>{d.label}</button>
+              ))}
+            </div>
+          </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
               <span style={{ fontSize: 11, color: C.muted, fontFamily: C.mono }}>배경</span>
               <input type="color" value={receiptBg} onChange={(e) => setReceiptBg(e.target.value)} style={{ width: 32, height: 28, border: `0.5px solid ${C.borderMid}`, padding: 2, cursor: 'pointer', background: 'none' }} />
@@ -974,6 +1014,23 @@ export default function Home() {
     const rBg = r.bg || '#ffffff'
     const rText = r.textColor || '#1A1A1A'
     const rMuted = rText + '99'
+    const decoDisplay = (() => {
+      const found = [
+        { value: 'default', display: '° ✦ ☆ ✦ °' },
+        { value: 'dino', display: '🦕 · · 🦕 · · 🦕' },
+        { value: 'cherry', display: '🍒 · · 🍒 · · 🍒' },
+        { value: 'bear', display: '🐻 · · 🐻 · · 🐻' },
+        { value: 'paw', display: '🐾 · · 🐾 · · 🐾' },
+        { value: 'letter', display: '✉️ · · ✉️ · · ✉️' },
+        { value: 'frog', display: '🐸 · · 🐸 · · 🐸' },
+        { value: 'person', display: '🧍 · · 🧍 · · 🧍' },
+        { value: 'sun', display: '☀️ · · ☀️ · · ☀️' },
+        { value: 'wind', display: '🌬️ · · 🌬️ · · 🌬️' },
+        { value: 'cat', display: '🐱 · · 🐱 · · 🐱' },
+        { value: 'dog', display: '🐶 · · 🐶 · · 🐶' },
+      ].find(d => d.value === r.deco)
+      return found ? found.display : '° ✦ ☆ ✦ °'
+    })()
     const idx = b.receipts.findIndex((x) => x.id === r.id)
     const orderNum = `#${String(idx + 1).padStart(4, '0')}`
     const cardNum = `**** **** **** ${1000 + (r.id % 9000)}`
@@ -1000,7 +1057,7 @@ export default function Home() {
         <div style={{ padding: 20 }}>
           <div ref={receiptRef} style={{ background: rBg, border: `0.5px solid rgba(0,0,0,0.08)`, borderRadius: 3, padding: '28px 20px', fontFamily: C.receipt }}>
             {/* 상단 장식 */}
-            <div style={{ textAlign: 'center', fontSize: 13, letterSpacing: '0.3em', color: rMuted, marginBottom: 18 }}>° ✦ ☆ ✦ °</div>
+            <div style={{ textAlign: 'center', fontSize: 13, letterSpacing: '0.3em', color: rMuted, marginBottom: 18 }}>{decoDisplay}</div>
             {/* 책 제목 크게 */}
             <div style={{ textAlign: 'center', fontSize: 20, fontWeight: 700, color: rText, marginBottom: 4, lineHeight: 1.3 }}>{b.title}</div>
             <div style={{ textAlign: 'center', fontSize: 10, letterSpacing: '0.12em', color: rMuted, marginBottom: 18 }}>{b.author} · {b.publisher}</div>
