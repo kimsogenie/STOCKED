@@ -309,18 +309,18 @@ export default function Home() {
   const [receiptDeco, setReceiptDeco] = useState('default')
 
   const RECEIPT_DECOS = [
-    { value: 'default', label: '✦', display: '° ✦ ☆ ✦ °' },
-    { value: 'dino', label: '🦕', display: '🦕 · · 🦕 · · 🦕' },
-    { value: 'cherry', label: '🍒', display: '🍒 · · 🍒 · · 🍒' },
-    { value: 'bear', label: '🐻', display: '🐻 · · 🐻 · · 🐻' },
-    { value: 'paw', label: '🐾', display: '🐾 · · 🐾 · · 🐾' },
-    { value: 'letter', label: '✉️', display: '✉️ · · ✉️ · · ✉️' },
-    { value: 'frog', label: '🐸', display: '🐸 · · 🐸 · · 🐸' },
-    { value: 'person', label: '🧍', display: '🧍 · · 🧍 · · 🧍' },
-    { value: 'sun', label: '☀️', display: '☀️ · · ☀️ · · ☀️' },
-    { value: 'wind', label: '🌬️', display: '🌬️ · · 🌬️ · · 🌬️' },
-    { value: 'cat', label: '🐱', display: '🐱 · · 🐱 · · 🐱' },
-    { value: 'dog', label: '🐶', display: '🐶 · · 🐶 · · 🐶' },
+    { value: 'default',  label: '✦☆✦',  display: '° ✦ ☆ ✦ °' },
+    { value: 'dot',      label: '·✦·',   display: '✦ · · · ✦' },
+    { value: 'music',    label: '♩♫♩',   display: '♩ ♪ ♫ ♪ ♩' },
+    { value: 'flower',   label: '✿·✿',   display: '✿ · · · ✿' },
+    { value: 'diamond',  label: '◇◆◇',   display: '◇ · ◆ · ◇' },
+    { value: 'star',     label: '＊˚＊',  display: '＊ ˚ · ˚ ＊' },
+    { value: 'wave',     label: '～·～',  display: '～ · · · ～' },
+    { value: 'cross',    label: '†✦†',   display: '† · ✦ · †' },
+    { value: 'arc',      label: '⌒·⌒',   display: '⌒ · · · ⌒' },
+    { value: 'ref',      label: '※·※',   display: '※ · · · ※' },
+    { value: 'dots',     label: '∴·∴',   display: '∴ · · · ∴' },
+    { value: 'quote',    label: '❝·❞',   display: '❝ · · · ❞' },
   ]
 
   const RECEIPT_THEMES = [
@@ -338,6 +338,12 @@ export default function Home() {
   const [errorModal, setErrorModal] = useState(false)
   const [errorText, setErrorText] = useState('')
   const [errorSending, setErrorSending] = useState(false)
+  const [notes, setNotes] = useState([])
+  const [showNotes, setShowNotes] = useState(false)
+  const [noteModal, setNoteModal] = useState(false)
+  const [noteText, setNoteText] = useState('')
+  const [noteNick, setNoteNick] = useState('')
+  const [noteSending, setNoteSending] = useState(false)
   const [sortBy, setSortBy] = useState('default') // default | year | month
   const [quotes, setQuotes] = useState([{ text: '', page: '' }])
   const [editingField, setEditingField] = useState(null)
@@ -474,6 +480,7 @@ export default function Home() {
     const newBook = {
       id: Date.now(), title: kakaoBook.title, author: kakaoBook.authors?.join(', ') || '',
       publisher: kakaoBook.publisher || '', thumbnail: kakaoBook.thumbnail || '',
+      isbn: isbn || '',
       readDate: new Date().toLocaleDateString('ko-KR').replace(/\. /g, '.').slice(0, -1),
       pages, h: SPINE_H,
       bg: colorSet.bg, spineText: colorSet.text,
@@ -548,6 +555,35 @@ export default function Home() {
       localStorage.setItem('stocked_books', JSON.stringify(updated))
     }
     setSelectedBook(updated.find((b) => b.id === selectedBook.id))
+  }
+
+  const loadNotes = async (isbn, title) => {
+    const key = isbn || title
+    if (!key) return
+    const { data } = await supabase.from('notes').select('*').eq('book_key', key).order('created_at', { ascending: false })
+    if (data) setNotes(data)
+  }
+
+  const submitNote = async () => {
+    if (!noteText.trim()) return
+    setNoteSending(true)
+    const key = selectedBook?.isbn || selectedBook?.title
+    const nick = noteNick.trim() || '익명'
+    await supabase.from('notes').insert({ book_key: key, book_title: selectedBook?.title, content: noteText.trim(), nickname: nick })
+    setNoteText('')
+    setNoteNick('')
+    setNoteModal(false)
+    setNoteSending(false)
+    await loadNotes(selectedBook?.isbn, selectedBook?.title)
+  }
+
+  const addNoteReaction = async (noteId, emoji) => {
+    const note = notes.find(n => n.id === noteId)
+    if (!note) return
+    const reactions = note.reactions || {}
+    reactions[emoji] = (reactions[emoji] || 0) + 1
+    await supabase.from('notes').update({ reactions }).eq('id', noteId)
+    setNotes(notes.map(n => n.id === noteId ? { ...n, reactions } : n))
   }
 
   const saveAsImage = async () => {
@@ -666,6 +702,36 @@ export default function Home() {
     }
   }
 
+  if (noteModal) {
+    return (
+      <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 24 }}>
+        <div style={{ background: '#FFFDF5', width: '100%', maxWidth: 400, padding: 24, borderRadius: 2, boxShadow: '2px 4px 20px rgba(0,0,0,0.15)' }}>
+          <div style={{ fontSize: 14, fontWeight: 600, color: C.text, fontFamily: C.font, marginBottom: 4 }}>익명 쪽지 남기기</div>
+          <div style={{ fontSize: 11, color: C.muted, fontFamily: C.font, marginBottom: 16 }}>{selectedBook?.title}</div>
+          <textarea
+            value={noteText}
+            onChange={(e) => setNoteText(e.target.value)}
+            placeholder="이 책을 읽고 느낀 점을 자유롭게 남겨주세요"
+            rows={4}
+            style={{ ...inputStyle, resize: 'none', display: 'block', marginBottom: 8, background: 'transparent' }}
+          />
+          <input
+            value={noteNick}
+            onChange={(e) => setNoteNick(e.target.value)}
+            placeholder="닉네임 (비워두면 익명)"
+            style={{ ...inputStyle, marginBottom: 12 }}
+          />
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button onClick={() => { setNoteModal(false); setNoteText(''); setNoteNick('') }} style={{ ...btnOutline, flex: 1 }}>취소</button>
+            <button onClick={submitNote} disabled={noteSending} style={{ ...btnSolid, flex: 1, opacity: noteSending ? 0.6 : 1 }}>
+              {noteSending ? '전송 중...' : '남기기 ✉'}
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   if (errorModal) {
     return (
       <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 9999, padding: 24 }}>
@@ -782,7 +848,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.1.1
+          © kimsogenie · v.1.1.2
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
@@ -932,11 +998,43 @@ export default function Home() {
             ))
           }
         </div>
+        {/* 이 책의 익명 쪽지 */}
+        <div style={{ padding: 20, borderTop: `0.5px solid ${C.border}` }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <div style={{ fontSize: 10, letterSpacing: '0.14em', color: C.muted, textTransform: 'uppercase', fontFamily: C.mono }}>이 책의 익명 쪽지</div>
+            <button onClick={async () => {
+              if (!showNotes) await loadNotes(b.isbn, b.title)
+              setShowNotes(!showNotes)
+            }} style={{ background: 'none', border: `0.5px solid ${C.borderMid}`, padding: '4px 10px', fontSize: 11, cursor: 'pointer', fontFamily: C.mono, color: C.muted }}>
+              {showNotes ? '접기 ∧' : '펼치기 ∨'}
+            </button>
+          </div>
+          {showNotes && (
+            <div>
+              {notes.length === 0 ? (
+                <div style={{ fontSize: 13, color: C.muted, textAlign: 'center', padding: '16px 0', fontFamily: C.font }}>아직 쪽지가 없어요. 첫 번째로 남겨보세요 ✉</div>
+              ) : notes.map(n => (
+                <div key={n.id} style={{ background: '#FFFDF5', border: `0.5px solid rgba(0,0,0,0.08)`, padding: '14px', marginBottom: 10, borderRadius: 2, boxShadow: '1px 2px 6px rgba(0,0,0,0.05)' }}>
+                  <div style={{ fontSize: 13, color: C.text, fontFamily: C.font, lineHeight: 1.7, marginBottom: 8 }}>{n.content}</div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ fontSize: 10, color: C.faint, fontFamily: C.mono }}>{n.nickname} · {n.created_at?.slice(0, 10)}</div>
+                    <div style={{ display: 'flex', gap: 6 }}>
+                      {['🥹', '💙', '🫂', '😮', '🌿'].map(e => (
+                        <button key={e} onClick={() => addNoteReaction(n.id, e)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 14, padding: '2px 4px' }}>
+                          {e}{n.reactions?.[e] ? <span style={{ fontSize: 9, color: C.muted }}>{n.reactions[e]}</span> : ''}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+              ))}
+              <button onClick={() => setNoteModal(true)} style={{ ...btnOutline, marginTop: 4, fontSize: 12 }}>✉ 나도 쪽지 남기기</button>
+            </div>
+          )}
+        </div>
       </div>
     )
   }
-
-  if (view === 'form' && selectedBook) {
     const b = selectedBook
     return (
       <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg }}>
