@@ -1035,6 +1035,8 @@ export default function Home() {
       </div>
     )
   }
+
+  if (view === 'form' && selectedBook) {
     const b = selectedBook
     return (
       <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg }}>
