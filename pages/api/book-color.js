@@ -3,14 +3,18 @@ export default async function handler(req, res) {
   if (!url) return res.status(400).json({ bg: null, text: null })
 
   try {
-    const response = await fetch(decodeURIComponent(url))
+    const response = await fetch(decodeURIComponent(url), {
+      headers: { 'User-Agent': 'Mozilla/5.0' }
+    })
     if (!response.ok) throw new Error('fetch failed')
 
     const buffer = Buffer.from(await response.arrayBuffer())
-    const sharp = require('sharp')
+
+    let sharp
+    try { sharp = require('sharp') } catch { throw new Error('sharp not available') }
 
     const { data, info } = await sharp(buffer)
-      .resize(20, 30, { fit: 'fill' })
+      .resize(16, 24, { fit: 'fill' })
       .removeAlpha()
       .raw()
       .toBuffer({ resolveWithObject: true })
@@ -18,18 +22,25 @@ export default async function handler(req, res) {
     let r = 0, g = 0, b = 0
     const total = info.width * info.height
     for (let i = 0; i < data.length; i += 3) {
-      r += data[i]
-      g += data[i + 1]
-      b += data[i + 2]
+      r += data[i]; g += data[i + 1]; b += data[i + 2]
     }
     r = Math.round(r / total)
     g = Math.round(g / total)
     b = Math.round(b / total)
 
-    // 밝게 올려서 spine 배경색, 어둡게 내려서 텍스트색
-    const lerp = (v, t, a) => Math.round(v + (t - v) * a)
-    const bg = `rgb(${lerp(r, 230, 0.55)}, ${lerp(g, 220, 0.55)}, ${lerp(b, 210, 0.55)})`
-    const text = `rgb(${Math.max(Math.round(r * 0.32), 18)}, ${Math.max(Math.round(g * 0.32), 18)}, ${Math.max(Math.round(b * 0.32), 18)})`
+    const mix = (v, t, a) => Math.round(v + (t - v) * a)
+    const bgR = mix(r, 240, 0.55)
+    const bgG = mix(g, 235, 0.55)
+    const bgB = mix(b, 225, 0.55)
+    const bg = `rgb(${bgR},${bgG},${bgB})`
+
+    const tR = Math.max(Math.round(r * 0.3), 15)
+    const tG = Math.max(Math.round(g * 0.3), 15)
+    const tB = Math.max(Math.round(b * 0.3), 15)
+    const text = `rgb(${tR},${tG},${tB})`
+
+    const brightness = (bgR * 299 + bgG * 587 + bgB * 114) / 1000
+    if (brightness > 235) throw new Error('too bright')
 
     res.setHeader('Cache-Control', 's-maxage=86400, stale-while-revalidate')
     return res.json({ bg, text })
