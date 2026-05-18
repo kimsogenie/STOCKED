@@ -63,12 +63,33 @@ function getSpineTilt(bookId) {
   return tilts[bookId % 10]
 }
 
+function getHashColor(title, author) {
+  const str = (title || '') + (author || '')
+  let hash = 0
+  for (let i = 0; i < str.length; i++) hash = str.charCodeAt(i) + ((hash << 5) - hash)
+  const h = Math.abs(hash) % 360
+  const s = 30 + (Math.abs(hash >> 8) % 20)
+  const l = 78 + (Math.abs(hash >> 16) % 10)
+  const hslToRgb = (h, s, l) => {
+    s /= 100; l /= 100
+    const k = n => (n + h / 30) % 12
+    const a = s * Math.min(l, 1 - l)
+    const f = n => l - a * Math.max(-1, Math.min(k(n) - 3, Math.min(9 - k(n), 1)))
+    return [Math.round(f(0)*255), Math.round(f(8)*255), Math.round(f(4)*255)]
+  }
+  const [r, g, b] = hslToRgb(h, s, l)
+  const tl = 22 + (Math.abs(hash >> 4) % 15)
+  const [tr, tg, tb] = hslToRgb(h, 45, tl)
+  return { bg: `rgb(${r},${g},${b})`, text: `rgb(${tr},${tg},${tb})` }
+}
+
 function BookSpine({ b, onClick }) {
   const w = getSpineWidth(b.pages)
   const h = getSpineHeight(b.id)
   const tilt = getSpineTilt(b.id)
   const fp = FONT_PAIRS[b.fp % FONT_PAIRS.length]
-  const tc = b.spineText || '#1A1A1A'
+  const colors = (b.bg && b.bg !== 'null') ? { bg: b.bg, text: b.spineText || '#1A1A1A' } : getHashColor(b.title, b.author)
+  const tc = colors.text
 
   return (
     <div
@@ -76,7 +97,7 @@ function BookSpine({ b, onClick }) {
       style={{
         width: w,
         height: h,
-        background: b.bg,
+        background: colors.bg,
         borderRight: '2px solid rgba(0,0,0,0.06)',
         display: 'flex',
         flexDirection: 'column',
@@ -897,7 +918,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.1.5
+          © kimsogenie · v.1.1.6
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
