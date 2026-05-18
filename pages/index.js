@@ -193,17 +193,26 @@ function Divider() {
 }
 
 
-function BookShelf({ books, onBookClick, onAddClick, sortBy, setSortBy }) {
+function BookShelf({ books, onBookClick, onAddClick, sortBy, setSortBy, filterStatus, setFilterStatus }) {
   const sortOptions = [
     { value: 'default', label: '추가순' },
     { value: 'year', label: '연도별' },
     { value: 'month', label: '월별' },
   ]
 
+  const statusOptions = [
+    { value: 'all', label: '전체' },
+    { value: 'read', label: '✅ 읽음' },
+    { value: 'reading', label: '📖 읽는 중' },
+    { value: 'want', label: '🔖 읽고 싶어요' },
+  ]
+
+  const filteredBooks = filterStatus === 'all' ? books : books.filter(b => (b.status || 'read') === filterStatus)
+
   const grouped = (() => {
-    if (sortBy === 'default') return [{ label: null, books }]
+    if (sortBy === 'default') return [{ label: null, books: filteredBooks }]
     const map = {}
-    books.forEach(b => {
+    filteredBooks.forEach(b => {
       const date = b.readDate || ''
       const key = sortBy === 'year' ? date.slice(0, 4) : date.slice(0, 7)
       if (!map[key]) map[key] = []
@@ -214,15 +223,31 @@ function BookShelf({ books, onBookClick, onAddClick, sortBy, setSortBy }) {
 
   return (
     <div style={{ background: C.bgShelf }}>
-      {/* 정렬 탭 */}
-      <div style={{ display: 'flex', gap: 0, padding: '10px 16px 0', borderBottom: `0.5px solid ${C.border}` }}>
-        {sortOptions.map(o => (
-          <button key={o.value} onClick={() => setSortBy(o.value)} style={{
-            background: 'none', border: 'none', borderBottom: sortBy === o.value ? `2px solid ${C.text}` : '2px solid transparent',
-            padding: '6px 12px', fontSize: 11, cursor: 'pointer', fontFamily: C.mono,
-            color: sortBy === o.value ? C.text : C.muted, letterSpacing: '0.05em',
-          }}>{o.label}</button>
-        ))}
+      {/* 정렬 탭 + 상태 필터 */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', borderBottom: `0.5px solid ${C.border}` }}>
+        <div style={{ display: 'flex' }}>
+          {sortOptions.map(o => (
+            <button key={o.value} onClick={() => setSortBy(o.value)} style={{
+              background: 'none', border: 'none', borderBottom: sortBy === o.value ? `2px solid ${C.text}` : '2px solid transparent',
+              padding: '10px 12px', fontSize: 11, cursor: 'pointer', fontFamily: C.mono,
+              color: sortBy === o.value ? C.text : C.muted, letterSpacing: '0.05em',
+            }}>{o.label}</button>
+          ))}
+        </div>
+        <select
+          value={filterStatus}
+          onChange={e => setFilterStatus(e.target.value)}
+          style={{
+            fontSize: 11, fontFamily: C.mono, color: C.text,
+            background: 'transparent', border: `0.5px solid ${C.borderMid}`,
+            padding: '4px 8px', cursor: 'pointer', outline: 'none',
+            borderRadius: 2,
+          }}
+        >
+          {statusOptions.map(o => (
+            <option key={o.value} value={o.value}>{o.label}</option>
+          ))}
+        </select>
       </div>
 
       {grouped.map((group, gi) => (
@@ -249,6 +274,11 @@ function BookShelf({ books, onBookClick, onAddClick, sortBy, setSortBy }) {
           </div>
         </div>
       ))}
+      {filteredBooks.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '32px 0', fontSize: 13, color: C.muted, fontFamily: C.font }}>
+          해당 상태의 책이 없어요
+        </div>
+      )}
     </div>
   )
 }
@@ -344,7 +374,8 @@ export default function Home() {
   const [noteText, setNoteText] = useState('')
   const [noteNick, setNoteNick] = useState('')
   const [noteSending, setNoteSending] = useState(false)
-  const [sortBy, setSortBy] = useState('default') // default | year | month
+  const [sortBy, setSortBy] = useState('default')
+  const [filterStatus, setFilterStatus] = useState('all')
   const [quotes, setQuotes] = useState([{ text: '', page: '' }])
   const [editingField, setEditingField] = useState(null)
   const receiptRef = useRef(null)
@@ -854,6 +885,8 @@ export default function Home() {
           onAddClick={() => setView('search')}
           sortBy={sortBy}
           setSortBy={setSortBy}
+          filterStatus={filterStatus}
+          setFilterStatus={setFilterStatus}
         />
 
         {books.length === 0 && (
@@ -864,7 +897,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.1.4
+          © kimsogenie · v.1.1.5
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
