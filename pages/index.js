@@ -599,7 +599,7 @@ export default function Home() {
     const b = updated.find((x) => x.id === bookId)
     setSelectedBook(b)
     if (!isGuest) {
-      const fieldMap = { readDate: 'read_date', pages: 'pages' }
+      const fieldMap = { readDate: 'read_date', pages: 'pages', status: 'status', rating: 'rating', bg: 'bg', spineText: 'spine_text' }
       await supabase.from('books').update({ [fieldMap[field] || field]: value }).eq('id', bookId)
     } else {
       localStorage.setItem('stocked_books', JSON.stringify(updated))
@@ -918,7 +918,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.1.6
+          © kimsogenie · v.1.1.7
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
@@ -1011,6 +1011,26 @@ export default function Home() {
                   style={{ fontSize: 10, letterSpacing: '0.08em', color: C.faint, fontFamily: C.mono, cursor: 'pointer', borderBottom: `0.5px dashed ${C.faint}` }}
                 >{b.pages}p ✎</span>
               )}
+            </div>
+            {/* spine 색상 */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 10 }}>
+              <span style={{ fontSize: 10, letterSpacing: '0.08em', color: C.faint, fontFamily: C.mono }}>SPINE ·</span>
+              <input type="color"
+                value={b.bg?.startsWith('#') ? b.bg : '#F5F2EC'}
+                onChange={(e) => updateBook(b.id, 'bg', e.target.value)}
+                style={{ width: 26, height: 22, border: `0.5px solid ${C.borderMid}`, padding: 1, cursor: 'pointer' }}
+              />
+              <input type="color"
+                value={b.spineText?.startsWith('#') ? b.spineText : '#1A1A1A'}
+                onChange={(e) => updateBook(b.id, 'spineText', e.target.value)}
+                style={{ width: 26, height: 22, border: `0.5px solid ${C.borderMid}`, padding: 1, cursor: 'pointer' }}
+              />
+              <span style={{ fontSize: 9, color: C.faint, fontFamily: C.mono }}>배경 · 글자</span>
+              <button onClick={async () => {
+                const { bg, text } = getHashColor(b.title, b.author)
+                await updateBook(b.id, 'bg', bg)
+                await updateBook(b.id, 'spineText', text)
+              }} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 9, color: C.faint, fontFamily: C.mono, textDecoration: 'underline', marginLeft: 2 }}>초기화</button>
             </div>
           </div>
         </div>
