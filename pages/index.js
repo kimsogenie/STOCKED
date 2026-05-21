@@ -397,11 +397,13 @@ export default function Home() {
   const [noteSending, setNoteSending] = useState(false)
   const [sortBy, setSortBy] = useState('default')
   const [filterStatus, setFilterStatus] = useState('all')
+  const [randomReceipt, setRandomReceipt] = useState(null)
   const [quotes, setQuotes] = useState([{ text: '', page: '' }])
   const [editingField, setEditingField] = useState(null)
   const receiptRef = useRef(null)
 
   useEffect(() => {
+    loadRandomReceipt()
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) { setUser(session.user); loadBooks(session.user.id); checkOnboarding() }
       else setLoading(false)
@@ -654,6 +656,25 @@ export default function Home() {
     setNotes(notes.map(n => n.id === noteId ? { ...n, reactions } : n))
   }
 
+  const loadRandomReceipt = async () => {
+    try {
+      const { data } = await supabase
+        .from('books')
+        .select('title, author, receipts')
+        .not('receipts', 'eq', '[]')
+        .not('receipts', 'is', null)
+        .limit(50)
+      if (!data || data.length === 0) return
+      const withReceipts = data.filter(b => b.receipts?.length > 0)
+      if (withReceipts.length === 0) return
+      const randBook = withReceipts[Math.floor(Math.random() * withReceipts.length)]
+      const randReceipt = randBook.receipts[Math.floor(Math.random() * randBook.receipts.length)]
+      if (randReceipt?.quotes?.length > 0) {
+        setRandomReceipt({ title: randBook.title, author: randBook.author, receipt: randReceipt })
+      }
+    } catch {}
+  }
+
   const saveAsImage = async () => {
     if (!receiptRef.current) return
     try {
@@ -690,52 +711,51 @@ export default function Home() {
   }
 
   if (!user && !isGuest && !loading) {
-    // 미니 영수증 프리뷰 컴포넌트
-    const PreviewReceipt = () => (
-      <div style={{ background: '#fff', border: `0.5px solid rgba(0,0,0,0.1)`, borderRadius: 3, padding: '16px 14px', fontFamily: C.receipt, width: '100%', boxSizing: 'border-box', transform: 'rotate(-1.5deg)', boxShadow: '2px 4px 16px rgba(0,0,0,0.10)' }}>
-        <div style={{ textAlign: 'center', fontSize: 10, letterSpacing: '0.25em', color: '#ccc', marginBottom: 8 }}>° ✦ ☆ ✦ °</div>
-        <div style={{ textAlign: 'center', fontSize: 12, fontWeight: 700, color: '#1A1A1A', marginBottom: 2 }}>채식주의자</div>
-        <div style={{ textAlign: 'center', fontSize: 9, color: '#aaa', marginBottom: 10, letterSpacing: '0.05em' }}>한강 · 창비</div>
-        <div style={{ borderTop: '1px dashed rgba(0,0,0,0.1)', margin: '8px 0' }} />
-        <div style={{ fontSize: 10, color: '#1A1A1A', lineHeight: 1.7, marginBottom: 4 }}>
-          <span style={{ color: '#aaa', marginRight: 6 }}>01</span>
-          나는 아무도 해치고 싶지 않아요. 그게 다예요.
-        </div>
-        <div style={{ borderTop: '1px dashed rgba(0,0,0,0.1)', margin: '8px 0' }} />
-        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: 9, color: '#1A1A1A' }}>
-          <span>TOTAL</span><span>1개의 문장</span>
-        </div>
-        <div style={{ fontSize: 9, color: '#aaa', marginTop: 4 }}>CARDHOLDER: sow ☆</div>
-      </div>
-    )
-
+    const rr = randomReceipt
     return (
       <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg, display: 'flex', flexDirection: 'column' }}>
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '52px 32px 40px' }}>
-          {/* 헤더 */}
-          <div style={{ marginBottom: 36 }}>
-            <img src="/logo.png" alt="STOCKED" style={{ height: 32, marginBottom: 12, objectFit: 'contain' }} />
-            <div style={{ fontSize: 22, fontWeight: 700, color: C.text, fontFamily: C.font, lineHeight: 1.35, marginBottom: 8 }}>
+        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', padding: '48px 32px 40px' }}>
+          <div style={{ marginBottom: 28 }}>
+            <img src="/logo.png" alt="STOCKED" style={{ height: 28, marginBottom: 10, objectFit: 'contain' }} />
+            <div style={{ fontSize: 22, fontWeight: 700, color: C.text, fontFamily: C.font, lineHeight: 1.35, marginBottom: 6 }}>
               읽은 책을 서재에 꽂고<br />명대사를 영수증으로
             </div>
-            <div style={{ fontSize: 13, color: C.muted, fontFamily: C.font, lineHeight: 1.7 }}>
+            <div style={{ fontSize: 12, color: C.muted, fontFamily: C.font, lineHeight: 1.7 }}>
               책 spine이 쌓이는 나만의 서재를 만들고,<br />기억하고 싶은 문장을 영수증으로 저장하세요.
             </div>
           </div>
 
-          {/* 영수증 미리보기 */}
-          <div style={{ marginBottom: 40, padding: '0 12px' }}>
-            <PreviewReceipt />
-          </div>
+          {/* 랜덤 영수증 */}
+          {rr && (
+            <div style={{ marginBottom: 28, transform: 'rotate(-1.2deg)' }}>
+              <div style={{ fontSize: 9, letterSpacing: '0.15em', color: C.faint, fontFamily: C.mono, marginBottom: 6, textAlign: 'center' }}>누군가의 영수증</div>
+              <div style={{ background: '#fff', border: `0.5px solid ${C.border}`, borderRadius: 3, padding: '18px 16px', fontFamily: C.receipt, boxShadow: '2px 4px 16px rgba(0,0,0,0.08)' }}>
+                <div style={{ textAlign: 'center', fontSize: 10, letterSpacing: '0.25em', color: '#ccc', marginBottom: 10 }}>° ✦ ☆ ✦ °</div>
+                <div style={{ textAlign: 'center', fontSize: 14, fontWeight: 700, color: '#1A1A1A', marginBottom: 2 }}>{rr.title}</div>
+                <div style={{ textAlign: 'center', fontSize: 9, color: '#aaa', marginBottom: 12, letterSpacing: '0.05em' }}>{rr.author}</div>
+                <div style={{ borderTop: '1px dashed rgba(0,0,0,0.1)', paddingTop: 10 }}>
+                  {rr.receipt.quotes.slice(0, 2).map((q, i) => (
+                    <div key={i} style={{ display: 'flex', gap: 8, marginBottom: 8, fontSize: 11, lineHeight: 1.7, color: '#1A1A1A' }}>
+                      <span style={{ color: '#ccc', fontSize: 9, flexShrink: 0, marginTop: 2 }}>{String(i + 1).padStart(2, '0')}</span>
+                      <span style={{ flex: 1 }}>{q.text.length > 60 ? q.text.slice(0, 60) + '…' : q.text}</span>
+                    </div>
+                  ))}
+                </div>
+                <div style={{ borderTop: '1px dashed rgba(0,0,0,0.1)', marginTop: 8, paddingTop: 8, display: 'flex', justifyContent: 'space-between', fontSize: 9, color: '#aaa' }}>
+                  <span>CARDHOLDER: {rr.receipt.nickname} ☆</span>
+                  <span>{rr.receipt.date}</span>
+                </div>
+              </div>
+            </div>
+          )}
 
-          {/* 버튼 */}
           <div style={{ width: '100%', marginBottom: 10 }}>
             <button onClick={loginWithGoogle} style={{ ...btnOutline, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
               <svg width="18" height="18" viewBox="0 0 18 18"><path d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.875 2.684-6.615z" fill="#4285F4"/><path d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332A8.997 8.997 0 0 0 9 18z" fill="#34A853"/><path d="M3.964 10.71A5.41 5.41 0 0 1 3.682 9c0-.593.102-1.17.282-1.71V4.958H.957A8.996 8.996 0 0 0 0 9c0 1.452.348 2.827.957 4.042l3.007-2.332z" fill="#FBBC05"/><path d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0A8.997 8.997 0 0 0 .957 4.958L3.964 6.29C4.672 4.163 6.656 3.58 9 3.58z" fill="#EA4335"/></svg>
               Google로 로그인
             </button>
           </div>
-          <div style={{ width: '100%', marginBottom: 24 }}>
+          <div style={{ width: '100%', marginBottom: 20 }}>
             <button onClick={enterAsGuest} style={btnSolid}>로그인 없이 이용하기</button>
           </div>
           <div style={{ fontSize: 11, color: C.faint, textAlign: 'center', fontFamily: C.font, lineHeight: 1.9 }}>
@@ -918,7 +938,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.1.7
+          © kimsogenie · v.1.1.8
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
