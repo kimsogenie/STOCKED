@@ -395,6 +395,7 @@ export default function Home() {
   const [noteText, setNoteText] = useState('')
   const [noteNick, setNoteNick] = useState('')
   const [noteSending, setNoteSending] = useState(false)
+  const [editingReceiptId, setEditingReceiptId] = useState(null)
   const [sortBy, setSortBy] = useState('default')
   const [filterStatus, setFilterStatus] = useState('all')
   const [randomReceipt, setRandomReceipt] = useState(null)
@@ -620,6 +621,24 @@ export default function Home() {
       localStorage.setItem('stocked_books', JSON.stringify(updated))
     }
     setSelectedBook(updated.find((b) => b.id === selectedBook.id))
+  }
+
+  const updateReceipt = async (receiptId) => {
+    const updatedReceipts = selectedBook.receipts.map(r =>
+      r.id === receiptId
+        ? { ...r, nickname, quotes: quotes.filter(q => q.text.trim()), bg: receiptBg, textColor: receiptText, deco: receiptDeco }
+        : r
+    )
+    const updated = books.map(b => b.id === selectedBook.id ? { ...b, receipts: updatedReceipts } : b)
+    setBooks(updated)
+    if (!isGuest) {
+      await supabase.from('books').update({ receipts: updatedReceipts }).eq('id', selectedBook.id)
+    } else {
+      localStorage.setItem('stocked_books', JSON.stringify(updated))
+    }
+    setSelectedBook(updated.find(b => b.id === selectedBook.id))
+    setEditingReceiptId(null)
+    setView('detail')
   }
 
   const loadNotes = async (title) => {
@@ -938,7 +957,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.1.8
+          © kimsogenie · v.1.1.9
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
@@ -1112,6 +1131,15 @@ export default function Home() {
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   <span onClick={() => { setSelectedReceipt(r); setView('receipt') }} style={{ fontSize: 14, color: C.muted, cursor: 'pointer' }}>→</span>
+                  <span onClick={() => {
+                    setEditingReceiptId(r.id)
+                    setNickname(r.nickname || '')
+                    setQuotes(r.quotes?.length ? r.quotes : [{ text: '', page: '' }])
+                    setReceiptBg(r.bg || '#ffffff')
+                    setReceiptText(r.textColor || '#1A1A1A')
+                    setReceiptDeco(r.deco || 'default')
+                    setView('form')
+                  }} style={{ fontSize: 12, color: C.muted, cursor: 'pointer', fontFamily: C.mono }}>✎</span>
                   <span onClick={() => deleteReceipt(r.id)} style={{ fontSize: 14, color: 'rgba(180,50,50,0.5)', cursor: 'pointer' }}>×</span>
                 </div>
               </div>
@@ -1158,9 +1186,10 @@ export default function Home() {
 
   if (view === 'form' && selectedBook) {
     const b = selectedBook
+    const isEditing = !!editingReceiptId
     return (
       <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg }}>
-        <NavBar onBack={() => setView('detail')} title="영수증 발급" right="" />
+        <NavBar onBack={() => { setEditingReceiptId(null); setView('detail') }} title={isEditing ? '영수증 수정' : '영수증 발급'} right="" />
         <div style={{ padding: '16px 20px', borderBottom: `0.5px solid ${C.border}` }}>
           <div style={{ fontSize: 10, letterSpacing: '0.14em', color: C.muted, textTransform: 'uppercase', marginBottom: 6, fontFamily: C.mono }}>BOOK</div>
           <div style={{ fontSize: 15, fontWeight: 600, color: C.text, fontFamily: C.font }}>{b.title}</div>
@@ -1224,7 +1253,9 @@ export default function Home() {
             </div>
           ))}
           <button onClick={() => setQuotes([...quotes, { text: '', page: '' }])} style={{ ...btnOutline, marginBottom: 10 }}>+ 명대사 추가</button>
-          <button onClick={generateReceipt} style={btnSolid}>영수증 생성하기 →</button>
+          <button onClick={isEditing ? () => updateReceipt(editingReceiptId) : generateReceipt} style={btnSolid}>
+            {isEditing ? '수정 완료 ✓' : '영수증 생성하기 →'}
+          </button>
         </div>
       </div>
     )
