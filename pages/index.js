@@ -957,7 +957,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.1.9
+          © kimsogenie · v.1.2.0
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
@@ -1129,8 +1129,8 @@ export default function Home() {
                   <div style={{ fontSize: 13, color: C.text, marginBottom: 3, fontFamily: C.font }}>ORDER #{String(i + 1).padStart(4, '0')} · {r.nickname}</div>
                   <div style={{ fontSize: 11, color: C.muted, fontFamily: C.font }}>{r.date} · {r.quotes.length}개의 문장</div>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <span onClick={() => { setSelectedReceipt(r); setView('receipt') }} style={{ fontSize: 14, color: C.muted, cursor: 'pointer' }}>→</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <span onClick={() => { setSelectedReceipt(r); setView('receipt') }} style={{ fontSize: 14, color: C.muted, cursor: 'pointer', padding: '6px 8px' }}>→</span>
                   <span onClick={() => {
                     setEditingReceiptId(r.id)
                     setNickname(r.nickname || '')
@@ -1139,8 +1139,8 @@ export default function Home() {
                     setReceiptText(r.textColor || '#1A1A1A')
                     setReceiptDeco(r.deco || 'default')
                     setView('form')
-                  }} style={{ fontSize: 12, color: C.muted, cursor: 'pointer', fontFamily: C.mono }}>✎</span>
-                  <span onClick={() => deleteReceipt(r.id)} style={{ fontSize: 14, color: 'rgba(180,50,50,0.5)', cursor: 'pointer' }}>×</span>
+                  }} style={{ fontSize: 13, color: C.muted, cursor: 'pointer', padding: '6px 8px', border: `0.5px solid ${C.borderMid}`, fontFamily: C.mono }}>✎ 수정</span>
+                  <span onClick={() => deleteReceipt(r.id)} style={{ fontSize: 13, color: 'rgba(180,50,50,0.6)', cursor: 'pointer', padding: '6px 8px', border: '0.5px solid rgba(180,50,50,0.2)', fontFamily: C.mono }}>× 삭제</span>
                 </div>
               </div>
             ))
