@@ -272,11 +272,16 @@ function BookShelf({ books, onBookClick, onAddClick, sortBy, setSortBy, filterSt
     const booksByDay = {}
     filteredBooks.forEach(b => {
       const d = b.readDate || ''
-      const m = d.slice(0, 7)
-      if (m === `${calYear}.${String(calMonth).padStart(2, '0')}`) {
-        const day = parseInt(d.slice(8, 10))
-        if (!booksByDay[day]) booksByDay[day] = []
-        booksByDay[day].push(b)
+      // 2026.7.1 또는 2026.07.01 둘 다 처리
+      const parts = d.split('.')
+      if (parts.length >= 2) {
+        const y = parseInt(parts[0])
+        const m = parseInt(parts[1])
+        const day = parseInt(parts[2]) || 1
+        if (y === calYear && m === calMonth) {
+          if (!booksByDay[day]) booksByDay[day] = []
+          booksByDay[day].push(b)
+        }
       }
     })
     const cells = []
@@ -1055,7 +1060,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.2.1
+          © kimsogenie · v.1.2.2
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
