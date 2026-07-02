@@ -219,6 +219,7 @@ function BookShelf({ books, onBookClick, onAddClick, sortBy, setSortBy, filterSt
     { value: 'default', label: '추가순' },
     { value: 'year', label: '연도별' },
     { value: 'month', label: '월별' },
+    { value: 'calendar', label: '달력' },
   ]
 
   const statusOptions = [
@@ -241,6 +242,100 @@ function BookShelf({ books, onBookClick, onAddClick, sortBy, setSortBy, filterSt
     })
     return Object.entries(map).sort((a, b) => b[0].localeCompare(a[0])).map(([k, v]) => ({ label: k, books: v }))
   })()
+
+  // 달력 뷰
+  const [calYear, setCalYear] = useState(new Date().getFullYear())
+  const [calMonth, setCalMonth] = useState(new Date().getMonth() + 1)
+
+  const TabBar = () => (
+    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', borderBottom: `0.5px solid ${C.border}` }}>
+      <div style={{ display: 'flex' }}>
+        {sortOptions.map(o => (
+          <button key={o.value} onClick={() => setSortBy(o.value)} style={{
+            background: 'none', border: 'none', borderBottom: sortBy === o.value ? `2px solid ${C.text}` : '2px solid transparent',
+            padding: '10px 12px', fontSize: 11, cursor: 'pointer', fontFamily: C.mono,
+            color: sortBy === o.value ? C.text : C.muted, letterSpacing: '0.05em',
+          }}>{o.label}</button>
+        ))}
+      </div>
+      <select value={filterStatus} onChange={e => setFilterStatus(e.target.value)}
+        style={{ fontSize: 11, fontFamily: C.mono, color: C.text, background: 'transparent', border: `0.5px solid ${C.borderMid}`, padding: '4px 8px', cursor: 'pointer', outline: 'none', borderRadius: 2 }}>
+        {statusOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+      </select>
+    </div>
+  )
+
+  if (sortBy === 'calendar') {
+    const daysInMonth = new Date(calYear, calMonth, 0).getDate()
+    const firstDay = new Date(calYear, calMonth - 1, 1).getDay()
+    const adjustedFirst = firstDay === 0 ? 6 : firstDay - 1
+    const booksByDay = {}
+    filteredBooks.forEach(b => {
+      const d = b.readDate || ''
+      const m = d.slice(0, 7)
+      if (m === `${calYear}.${String(calMonth).padStart(2, '0')}`) {
+        const day = parseInt(d.slice(8, 10))
+        if (!booksByDay[day]) booksByDay[day] = []
+        booksByDay[day].push(b)
+      }
+    })
+    const cells = []
+    for (let i = 0; i < adjustedFirst; i++) cells.push(null)
+    for (let d = 1; d <= daysInMonth; d++) cells.push(d)
+    const DAYS = ['월', '화', '수', '목', '금', '토', '일']
+    const today = new Date()
+
+    return (
+      <div style={{ background: C.bg }}>
+        <TabBar />
+        <div style={{ padding: '16px 12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
+            <button onClick={() => { if (calMonth === 1) { setCalYear(y => y - 1); setCalMonth(12) } else setCalMonth(m => m - 1) }}
+              style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: C.muted, padding: '4px 10px' }}>‹</button>
+            <div style={{ fontSize: 16, fontWeight: 700, color: C.text, fontFamily: C.font }}>{calYear}.{String(calMonth).padStart(2, '0')}.</div>
+            <button onClick={() => { if (calMonth === 12) { setCalYear(y => y + 1); setCalMonth(1) } else setCalMonth(m => m + 1) }}
+              style={{ background: 'none', border: 'none', fontSize: 20, cursor: 'pointer', color: C.muted, padding: '4px 10px' }}>›</button>
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', marginBottom: 4 }}>
+            {DAYS.map((d, i) => (
+              <div key={d} style={{ textAlign: 'center', fontSize: 10, color: i === 6 ? '#E05050' : C.muted, fontFamily: C.mono, padding: '4px 0' }}>{d}</div>
+            ))}
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '1px', background: C.border }}>
+            {cells.map((day, i) => {
+              const booksOnDay = day ? (booksByDay[day] || []) : []
+              const isToday = day && calMonth === today.getMonth() + 1 && calYear === today.getFullYear() && day === today.getDate()
+              return (
+                <div key={i} style={{ background: C.bg, minHeight: 72, padding: '4px 3px' }}>
+                  {day && (
+                    <>
+                      <div style={{ fontSize: 10, color: isToday ? '#fff' : C.muted, fontFamily: C.mono,
+                        background: isToday ? C.text : 'none', borderRadius: '50%',
+                        width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 3 }}>{day}</div>
+                      {booksOnDay.map(b => (
+                        <div key={b.id} onClick={() => onBookClick(b)} style={{ cursor: 'pointer', marginBottom: 3 }}>
+                          {b.thumbnail
+                            ? <img src={b.thumbnail} alt={b.title} style={{ width: '100%', aspectRatio: '2/3', objectFit: 'cover', display: 'block', borderRadius: 1 }} />
+                            : <div style={{ width: '100%', aspectRatio: '2/3', background: b.bg || '#ddd', borderRadius: 1 }} />
+                          }
+                          {b.rating > 0 && (
+                            <div style={{ fontSize: 7, color: '#E8A020', textAlign: 'center', letterSpacing: 0 }}>
+                              {'★'.repeat(b.rating)}{'☆'.repeat(5 - b.rating)}
+                            </div>
+                          )}
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+          <div style={{ textAlign: 'center', fontSize: 11, color: C.muted, fontFamily: C.font, marginTop: 14 }}>이번 달은 얼마나 읽었나요?</div>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div style={{ background: C.bgShelf }}>
@@ -396,6 +491,9 @@ export default function Home() {
   const [noteNick, setNoteNick] = useState('')
   const [noteSending, setNoteSending] = useState(false)
   const [editingReceiptId, setEditingReceiptId] = useState(null)
+  const [detailTab, setDetailTab] = useState('receipt')
+  const [review, setReview] = useState('')
+  const [reviewSaving, setReviewSaving] = useState(false)
   const [sortBy, setSortBy] = useState('default')
   const [filterStatus, setFilterStatus] = useState('all')
   const [randomReceipt, setRandomReceipt] = useState(null)
@@ -438,7 +536,7 @@ export default function Home() {
       id: b.id, title: b.title, author: b.author, publisher: b.publisher,
       thumbnail: b.thumbnail, readDate: b.read_date, pages: b.pages,
       h: b.h, bg: b.bg, spineText: b.spine_text, fp: b.fp, receipts: b.receipts || [],
-      status: b.status || 'read', rating: b.rating || 0,
+      status: b.status || 'read', rating: b.rating || 0, review: b.review || '',
     })))
     setLoading(false)
   }
@@ -602,7 +700,7 @@ export default function Home() {
     const b = updated.find((x) => x.id === bookId)
     setSelectedBook(b)
     if (!isGuest) {
-      const fieldMap = { readDate: 'read_date', pages: 'pages', status: 'status', rating: 'rating', bg: 'bg', spineText: 'spine_text' }
+      const fieldMap = { readDate: 'read_date', pages: 'pages', status: 'status', rating: 'rating', bg: 'bg', spineText: 'spine_text', review: 'review' }
       await supabase.from('books').update({ [fieldMap[field] || field]: value }).eq('id', bookId)
     } else {
       localStorage.setItem('stocked_books', JSON.stringify(updated))
@@ -957,7 +1055,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.2.0
+          © kimsogenie · v.1.2.1
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
@@ -1091,7 +1189,7 @@ export default function Home() {
             ))}
           </div>
           {/* 별점 */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 4 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 4, marginBottom: 16 }}>
             {[1,2,3,4,5].map(star => (
               <span key={star} onClick={() => updateBook(b.id, 'rating', b.rating === star ? 0 : star)}
                 style={{ fontSize: 22, cursor: 'pointer', color: star <= (b.rating || 0) ? '#E8A020' : C.faint, lineHeight: 1 }}>
@@ -1100,15 +1198,6 @@ export default function Home() {
             ))}
             {b.rating > 0 && <span style={{ fontSize: 11, color: C.muted, fontFamily: C.mono, marginLeft: 4 }}>{b.rating}.0</span>}
           </div>
-          <button onClick={() => {
-            const saved = localStorage.getItem('stocked_nickname') || ''
-            setNickname(saved)
-            setReceiptBg('#ffffff')
-            setReceiptText('#1A1A1A')
-            setReceiptDeco('default')
-            setQuotes([{ text: '', page: '' }])
-            setView('form')
-          }} style={{ ...btnSolid, marginBottom: 8 }}>영수증 발급하기 →</button>
           <button onClick={() => {
             const url = `${window.location.origin}/shelf/${user?.id || 'guest'}`
             if (navigator.share) {
@@ -1120,32 +1209,84 @@ export default function Home() {
           }} style={{ ...btnOutline, marginBottom: 8 }}>내 서재 공유하기 🔗</button>
           <button onClick={() => deleteBook(b.id)} style={{ ...btnOutline, fontSize: 12, color: 'rgba(180,50,50,0.7)', borderColor: 'rgba(180,50,50,0.25)' }}>서재에서 삭제</button>
         </div>
-        <div style={{ padding: 20 }}>
-          <div style={{ fontSize: 10, letterSpacing: '0.14em', color: C.muted, textTransform: 'uppercase', marginBottom: 14, fontFamily: C.mono }}>발급된 영수증</div>
-          {rc === 0 ? <div style={{ fontSize: 14, color: C.muted, textAlign: 'center', padding: '20px 0', fontFamily: C.font }}>아직 없어요</div>
-            : b.receipts.map((r, i) => (
-              <div key={r.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: `0.5px solid ${C.border}` }}>
-                <div onClick={() => { setSelectedReceipt(r); setView('receipt') }} style={{ flex: 1, cursor: 'pointer' }}>
-                  <div style={{ fontSize: 13, color: C.text, marginBottom: 3, fontFamily: C.font }}>ORDER #{String(i + 1).padStart(4, '0')} · {r.nickname}</div>
-                  <div style={{ fontSize: 11, color: C.muted, fontFamily: C.font }}>{r.date} · {r.quotes.length}개의 문장</div>
-                </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                  <span onClick={() => { setSelectedReceipt(r); setView('receipt') }} style={{ fontSize: 14, color: C.muted, cursor: 'pointer', padding: '6px 8px' }}>→</span>
-                  <span onClick={() => {
-                    setEditingReceiptId(r.id)
-                    setNickname(r.nickname || '')
-                    setQuotes(r.quotes?.length ? r.quotes : [{ text: '', page: '' }])
-                    setReceiptBg(r.bg || '#ffffff')
-                    setReceiptText(r.textColor || '#1A1A1A')
-                    setReceiptDeco(r.deco || 'default')
-                    setView('form')
-                  }} style={{ fontSize: 13, color: C.muted, cursor: 'pointer', padding: '6px 8px', border: `0.5px solid ${C.borderMid}`, fontFamily: C.mono }}>✎ 수정</span>
-                  <span onClick={() => deleteReceipt(r.id)} style={{ fontSize: 13, color: 'rgba(180,50,50,0.6)', cursor: 'pointer', padding: '6px 8px', border: '0.5px solid rgba(180,50,50,0.2)', fontFamily: C.mono }}>× 삭제</span>
-                </div>
-              </div>
-            ))
-          }
+
+        {/* 탭: 영수증 / 독후감 */}
+        <div style={{ borderBottom: `0.5px solid ${C.border}`, display: 'flex' }}>
+          {[{ key: 'receipt', label: '영수증' }, { key: 'review', label: '독후감' }].map(t => (
+            <button key={t.key} onClick={() => { setDetailTab(t.key); if (t.key === 'review') setReview(b.review || '') }}
+              style={{ flex: 1, background: 'none', border: 'none', borderBottom: detailTab === t.key ? `2px solid ${C.text}` : '2px solid transparent',
+                padding: '12px 0', fontSize: 12, cursor: 'pointer', fontFamily: C.mono, color: detailTab === t.key ? C.text : C.muted,
+                letterSpacing: '0.08em' }}>
+              {t.label}
+            </button>
+          ))}
         </div>
+
+        {/* 영수증 탭 */}
+        {detailTab === 'receipt' && (
+          <div style={{ padding: 20 }}>
+            <button onClick={() => {
+              const saved = localStorage.getItem('stocked_nickname') || ''
+              setNickname(saved)
+              setReceiptBg('#ffffff')
+              setReceiptText('#1A1A1A')
+              setReceiptDeco('default')
+              setQuotes([{ text: '', page: '' }])
+              setView('form')
+            }} style={{ ...btnSolid, marginBottom: 16 }}>영수증 발급하기 →</button>
+            <div style={{ fontSize: 10, letterSpacing: '0.14em', color: C.muted, textTransform: 'uppercase', marginBottom: 14, fontFamily: C.mono }}>발급된 영수증</div>
+            {rc === 0 ? <div style={{ fontSize: 14, color: C.muted, textAlign: 'center', padding: '20px 0', fontFamily: C.font }}>아직 없어요</div>
+              : b.receipts.map((r, i) => (
+                <div key={r.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '12px 0', borderBottom: `0.5px solid ${C.border}` }}>
+                  <div onClick={() => { setSelectedReceipt(r); setView('receipt') }} style={{ flex: 1, cursor: 'pointer' }}>
+                    <div style={{ fontSize: 13, color: C.text, marginBottom: 3, fontFamily: C.font }}>ORDER #{String(i + 1).padStart(4, '0')} · {r.nickname}</div>
+                    <div style={{ fontSize: 11, color: C.muted, fontFamily: C.font }}>{r.date} · {r.quotes.length}개의 문장</div>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span onClick={() => { setSelectedReceipt(r); setView('receipt') }} style={{ fontSize: 14, color: C.muted, cursor: 'pointer', padding: '6px 8px' }}>→</span>
+                    <span onClick={() => {
+                      setEditingReceiptId(r.id)
+                      setNickname(r.nickname || '')
+                      setQuotes(r.quotes?.length ? r.quotes : [{ text: '', page: '' }])
+                      setReceiptBg(r.bg || '#ffffff')
+                      setReceiptText(r.textColor || '#1A1A1A')
+                      setReceiptDeco(r.deco || 'default')
+                      setView('form')
+                    }} style={{ fontSize: 13, color: C.muted, cursor: 'pointer', padding: '6px 8px', border: `0.5px solid ${C.borderMid}`, fontFamily: C.mono }}>✎ 수정</span>
+                    <span onClick={() => deleteReceipt(r.id)} style={{ fontSize: 13, color: 'rgba(180,50,50,0.6)', cursor: 'pointer', padding: '6px 8px', border: '0.5px solid rgba(180,50,50,0.2)', fontFamily: C.mono }}>× 삭제</span>
+                  </div>
+                </div>
+              ))
+            }
+          </div>
+        )}
+
+        {/* 독후감 탭 */}
+        {detailTab === 'review' && (
+          <div style={{ padding: 20 }}>
+            <div style={{ fontSize: 10, letterSpacing: '0.14em', color: C.muted, textTransform: 'uppercase', marginBottom: 12, fontFamily: C.mono }}>나만의 서평</div>
+            <textarea
+              value={review}
+              onChange={e => setReview(e.target.value)}
+              placeholder={`『${b.title}』을 읽고 느낀 점을 자유롭게 남겨요`}
+              rows={8}
+              style={{ ...inputStyle, resize: 'none', display: 'block', marginBottom: 10, fontFamily: C.font, fontSize: 13, lineHeight: 1.8, width: '100%' }}
+            />
+            <button onClick={async () => {
+              setReviewSaving(true)
+              await updateBook(b.id, 'review', review)
+              setReviewSaving(false)
+            }} style={{ ...btnSolid, opacity: reviewSaving ? 0.6 : 1 }}>
+              {reviewSaving ? '저장 중...' : '저장하기 ✓'}
+            </button>
+            {b.review && (
+              <div style={{ marginTop: 20, padding: '14px', background: 'rgba(0,0,0,0.02)', borderLeft: `2px solid ${C.borderMid}` }}>
+                <div style={{ fontSize: 10, color: C.faint, fontFamily: C.mono, marginBottom: 8, letterSpacing: '0.1em' }}>저장된 서평</div>
+                <div style={{ fontSize: 13, color: C.text, lineHeight: 1.8, fontFamily: C.font, whiteSpace: 'pre-wrap' }}>{b.review}</div>
+              </div>
+            )}
+          </div>
+        )}
         {/* 이 책의 익명 쪽지 */}
         <div style={{ padding: 20, borderTop: `0.5px solid ${C.border}` }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
