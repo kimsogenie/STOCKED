@@ -216,7 +216,7 @@ function Divider() {
 }
 
 
-function BookShelf({ books, onBookClick, onAddClick, sortBy, setSortBy, filterStatus, setFilterStatus }) {
+function BookShelf({ books, onBookClick, onAddClick, sortBy, setSortBy, filterStatus, setFilterStatus, calYear, setCalYear, calMonth, setCalMonth }) {
   const sortOptions = [
     { value: 'default', label: '추가순' },
     { value: 'year', label: '연도별' },
@@ -232,9 +232,6 @@ function BookShelf({ books, onBookClick, onAddClick, sortBy, setSortBy, filterSt
   ]
 
   const filteredBooks = filterStatus === 'all' ? books : books.filter(b => (b.status || 'read') === filterStatus)
-
-  const [calYear, setCalYear] = useState(new Date().getFullYear())
-  const [calMonth, setCalMonth] = useState(new Date().getMonth() + 1)
 
   const grouped = (() => {
     if (sortBy === 'default') return [{ label: null, books: filteredBooks }]
@@ -508,6 +505,8 @@ export default function Home() {
   const [reviewSaving, setReviewSaving] = useState(false)
   const [sortBy, setSortBy] = useState('default')
   const [filterStatus, setFilterStatus] = useState('all')
+  const [calYear, setCalYear] = useState(new Date().getFullYear())
+  const [calMonth, setCalMonth] = useState(new Date().getMonth() + 1)
   const [randomReceipt, setRandomReceipt] = useState(null)
   const [quotes, setQuotes] = useState([{ text: '', page: '' }])
   const [editingField, setEditingField] = useState(null)
@@ -1051,12 +1050,16 @@ export default function Home() {
 
         <BookShelf
           books={books}
-          onBookClick={(b) => { setSelectedBook(b); setView('detail') }}
+          onBookClick={(b) => { setSelectedBook(b); setShowNotes(false); setDetailTab('receipt'); setView('detail') }}
           onAddClick={() => setView('search')}
           sortBy={sortBy}
           setSortBy={setSortBy}
           filterStatus={filterStatus}
           setFilterStatus={setFilterStatus}
+          calYear={calYear}
+          setCalYear={setCalYear}
+          calMonth={calMonth}
+          setCalMonth={setCalMonth}
         />
 
         {books.length === 0 && (
@@ -1067,7 +1070,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.2.6
+          © kimsogenie · v.1.2.7
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
