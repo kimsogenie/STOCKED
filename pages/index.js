@@ -284,9 +284,21 @@ function BookShelf({ books, onBookClick, onAddClick, sortBy, setSortBy, filterSt
         }
       }
     })
-    const cells = []
-    for (let i = 0; i < adjustedFirst; i++) cells.push(null)
-    for (let d = 1; d <= daysInMonth; d++) cells.push(d)
+    // 기간 바 계산
+    const parseDate = d => { const p = (d || '').split('.'); return p.length >= 3 ? new Date(p[0], p[1]-1, p[2]) : null }
+    const readingRanges = filteredBooks
+      .filter(b => b.startDate && b.readDate)
+      .map(b => ({
+        b,
+        start: parseDate(b.startDate),
+        end: parseDate(b.readDate),
+      }))
+      .filter(r => r.start && r.end && r.start <= r.end)
+
+    const getRangesForDay = (day) => {
+      const date = new Date(calYear, calMonth - 1, day)
+      return readingRanges.filter(r => r.start <= date && date <= r.end)
+    }
     const DAYS = ['월', '화', '수', '목', '금', '토', '일']
     const today = new Date()
 
@@ -317,8 +329,23 @@ function BookShelf({ books, onBookClick, onAddClick, sortBy, setSortBy, filterSt
                       <div style={{ fontSize: 10, color: isToday ? '#fff' : C.muted, fontFamily: C.mono,
                         background: isToday ? C.text : 'none', borderRadius: '50%',
                         width: 18, height: 18, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 3 }}>{day}</div>
+                      {/* 기간 바 */}
+                      {getRangesForDay(day).map((r, ri) => {
+                        const isStart = r.start.getDate() === day && r.start.getMonth() === calMonth - 1 && r.start.getFullYear() === calYear
+                        const isEnd = r.end.getDate() === day && r.end.getMonth() === calMonth - 1 && r.end.getFullYear() === calYear
+                        const colors = getHashColor(r.b.title, r.b.author)
+                        return (
+                          <div key={ri} onClick={() => onBookClick(r.b)} style={{
+                            height: 6, background: colors.bg, marginBottom: 2, cursor: 'pointer',
+                            borderRadius: isStart && isEnd ? 3 : isStart ? '3px 0 0 3px' : isEnd ? '0 3px 3px 0' : 0,
+                            border: `0.5px solid ${colors.text}22`,
+                            position: 'relative',
+                          }} title={r.b.title} />
+                        )
+                      })}
+                      {/* 완독일 책 표지 */}
                       {booksOnDay.map(b => (
-                        <div key={b.id} onClick={() => onBookClick(b)} style={{ cursor: 'pointer', marginBottom: 3 }}>
+                        <div key={b.id} onClick={() => onBookClick(b)} style={{ cursor: 'pointer', marginBottom: 3, marginTop: 2 }}>
                           {b.thumbnail
                             ? <img src={b.thumbnail} alt={b.title} style={{ width: '100%', aspectRatio: '2/3', objectFit: 'cover', display: 'block', borderRadius: 1 }} />
                             : <div style={{ width: '100%', aspectRatio: '2/3', background: b.bg || '#ddd', borderRadius: 1 }} />
@@ -539,7 +566,7 @@ export default function Home() {
     const { data } = await supabase.from('books').select('*').eq('user_id', uid).order('created_at', { ascending: true })
     if (data) setBooks(data.map(b => ({
       id: b.id, title: b.title, author: b.author, publisher: b.publisher,
-      thumbnail: b.thumbnail, readDate: b.read_date, pages: b.pages,
+      thumbnail: b.thumbnail, readDate: b.read_date, startDate: b.start_date || '', pages: b.pages,
       h: b.h, bg: b.bg, spineText: b.spine_text, fp: b.fp, receipts: b.receipts || [],
       status: b.status || 'read', rating: b.rating || 0, review: b.review || '',
     })))
@@ -705,7 +732,7 @@ export default function Home() {
     const b = updated.find((x) => x.id === bookId)
     setSelectedBook(b)
     if (!isGuest) {
-      const fieldMap = { readDate: 'read_date', pages: 'pages', status: 'status', rating: 'rating', bg: 'bg', spineText: 'spine_text', review: 'review' }
+      const fieldMap = { readDate: 'read_date', startDate: 'start_date', pages: 'pages', status: 'status', rating: 'rating', bg: 'bg', spineText: 'spine_text', review: 'review' }
       await supabase.from('books').update({ [fieldMap[field] || field]: value }).eq('id', bookId)
     } else {
       localStorage.setItem('stocked_books', JSON.stringify(updated))
@@ -1060,7 +1087,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.2.2
+          © kimsogenie · v.1.2.3
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
@@ -1118,6 +1145,33 @@ export default function Home() {
             <div style={{ fontSize: 13, color: C.muted, marginBottom: 2, fontFamily: C.font }}>{b.author}</div>
             <div style={{ fontSize: 13, color: C.muted, marginBottom: 12, fontFamily: C.font }}>{b.publisher}</div>
             {/* 읽은 날짜 수정 */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+              <span style={{ fontSize: 10, letterSpacing: '0.08em', color: C.faint, fontFamily: C.mono }}>START ·</span>
+              {editingField === 'startDate' ? (
+                <input
+                  defaultValue={b.startDate}
+                  autoFocus
+                  placeholder="2026.7.1"
+                  onBlur={(e) => updateBook(b.id, 'startDate', e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && updateBook(b.id, 'startDate', e.target.value)}
+                  style={{ fontSize: 10, fontFamily: C.mono, border: `0.5px solid ${C.borderMid}`, background: 'transparent', color: C.text, padding: '2px 4px', width: 90 }}
+                />
+              ) : (
+                <span onClick={() => setEditingField('startDate')}
+                  style={{ fontSize: 10, letterSpacing: '0.08em', color: b.startDate ? C.faint : C.border, fontFamily: C.mono, cursor: 'pointer', borderBottom: `0.5px dashed ${C.faint}` }}>
+                  {b.startDate || '날짜 입력'} ✎
+                </span>
+              )}
+              {b.startDate && b.readDate && (
+                <span style={{ fontSize: 10, color: C.faint, fontFamily: C.mono }}>
+                  · {(() => {
+                    const parseDate = d => { const p = d.split('.'); return new Date(p[0], p[1]-1, p[2]) }
+                    const diff = Math.round((parseDate(b.readDate) - parseDate(b.startDate)) / 86400000)
+                    return diff >= 0 ? `${diff}일` : ''
+                  })()}
+                </span>
+              )}
+            </div>
             <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
               <span style={{ fontSize: 10, letterSpacing: '0.08em', color: C.faint, fontFamily: C.mono }}>READ ·</span>
               {editingField === 'readDate' ? (
