@@ -164,9 +164,11 @@ function Barcode({ seed }) {
     x += w + g
   }
   return (
-    <svg viewBox={`0 0 ${x} 34`} style={{ width: '100%', maxWidth: 200, height: 34, display: 'block', margin: '0 auto' }}>
-      {bars.map((b, i) => <rect key={i} x={b.x} y={0} width={b.w} height={34} fill="#1A1A1A" />)}
-    </svg>
+    <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+      <svg viewBox={`0 0 ${x} 34`} width="200" height="34" style={{ display: 'block' }}>
+        {bars.map((b, i) => <rect key={i} x={b.x} y={0} width={b.w} height={34} fill="#1A1A1A" />)}
+      </svg>
+    </div>
   )
 }
 
@@ -1087,7 +1089,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.2.3
+          © kimsogenie · v.1.2.4
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
