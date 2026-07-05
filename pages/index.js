@@ -303,6 +303,9 @@ function BookShelf({ books, onBookClick, onAddClick, sortBy, setSortBy, filterSt
     }
     const DAYS = ['월', '화', '수', '목', '금', '토', '일']
     const today = new Date()
+    const cells = []
+    for (let i = 0; i < adjustedFirst; i++) cells.push(null)
+    for (let d = 1; d <= daysInMonth; d++) cells.push(d)
 
     return (
       <div style={{ background: C.bg }}>
@@ -1064,7 +1067,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.2.5
+          © kimsogenie · v.1.2.6
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
