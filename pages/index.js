@@ -233,6 +233,9 @@ function BookShelf({ books, onBookClick, onAddClick, sortBy, setSortBy, filterSt
 
   const filteredBooks = filterStatus === 'all' ? books : books.filter(b => (b.status || 'read') === filterStatus)
 
+  const [calYear, setCalYear] = useState(new Date().getFullYear())
+  const [calMonth, setCalMonth] = useState(new Date().getMonth() + 1)
+
   const grouped = (() => {
     if (sortBy === 'default') return [{ label: null, books: filteredBooks }]
     const map = {}
@@ -245,11 +248,8 @@ function BookShelf({ books, onBookClick, onAddClick, sortBy, setSortBy, filterSt
     return Object.entries(map).sort((a, b) => b[0].localeCompare(a[0])).map(([k, v]) => ({ label: k, books: v }))
   })()
 
-  // 달력 뷰
-  const [calYear, setCalYear] = useState(new Date().getFullYear())
-  const [calMonth, setCalMonth] = useState(new Date().getMonth() + 1)
-
-  const TabBar = () => (
+  // 공통 탭바 JSX
+  const tabBarJsx = (
     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', borderBottom: `0.5px solid ${C.border}` }}>
       <div style={{ display: 'flex' }}>
         {sortOptions.map(o => (
@@ -306,7 +306,7 @@ function BookShelf({ books, onBookClick, onAddClick, sortBy, setSortBy, filterSt
 
     return (
       <div style={{ background: C.bg }}>
-        <TabBar />
+        {tabBarJsx}
         <div style={{ padding: '16px 12px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 16 }}>
             <button onClick={() => { if (calMonth === 1) { setCalYear(y => y - 1); setCalMonth(12) } else setCalMonth(m => m - 1) }}
@@ -373,32 +373,7 @@ function BookShelf({ books, onBookClick, onAddClick, sortBy, setSortBy, filterSt
 
   return (
     <div style={{ background: C.bgShelf }}>
-      {/* 정렬 탭 + 상태 필터 */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 16px', borderBottom: `0.5px solid ${C.border}` }}>
-        <div style={{ display: 'flex' }}>
-          {sortOptions.map(o => (
-            <button key={o.value} onClick={() => setSortBy(o.value)} style={{
-              background: 'none', border: 'none', borderBottom: sortBy === o.value ? `2px solid ${C.text}` : '2px solid transparent',
-              padding: '10px 12px', fontSize: 11, cursor: 'pointer', fontFamily: C.mono,
-              color: sortBy === o.value ? C.text : C.muted, letterSpacing: '0.05em',
-            }}>{o.label}</button>
-          ))}
-        </div>
-        <select
-          value={filterStatus}
-          onChange={e => setFilterStatus(e.target.value)}
-          style={{
-            fontSize: 11, fontFamily: C.mono, color: C.text,
-            background: 'transparent', border: `0.5px solid ${C.borderMid}`,
-            padding: '4px 8px', cursor: 'pointer', outline: 'none',
-            borderRadius: 2,
-          }}
-        >
-          {statusOptions.map(o => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
-      </div>
+      {tabBarJsx}
 
       {grouped.map((group, gi) => (
         <div key={gi}>
@@ -1089,7 +1064,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.2.4
+          © kimsogenie · v.1.2.5
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
