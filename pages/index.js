@@ -90,6 +90,7 @@ function BookSpine({ b, onClick }) {
   const fp = FONT_PAIRS[b.fp % FONT_PAIRS.length]
   const colors = (b.bg && b.bg !== 'null') ? { bg: b.bg, text: b.spineText || '#1A1A1A' } : getHashColor(b.title, b.author)
   const tc = colors.text
+  const isFlipped = b.status === 'stopped' || b.status === 'later'
 
   return (
     <div
@@ -108,16 +109,17 @@ function BookSpine({ b, onClick }) {
         boxSizing: 'border-box',
         transition: 'transform 0.2s ease, box-shadow 0.2s ease',
         padding: '6px 3px',
-        transform: `rotate(${tilt}deg)`,
+        transform: isFlipped ? `rotate(${tilt}deg) scaleX(-1)` : `rotate(${tilt}deg)`,
         transformOrigin: 'bottom center',
+        opacity: isFlipped ? 0.55 : 1,
         alignSelf: 'flex-end',
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform = `rotate(${tilt}deg) translateY(-10px)`
+        e.currentTarget.style.transform = isFlipped ? `rotate(${tilt}deg) scaleX(-1) translateY(-10px)` : `rotate(${tilt}deg) translateY(-10px)`
         e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,0,0,0.16)'
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.transform = `rotate(${tilt}deg)`
+        e.currentTarget.style.transform = isFlipped ? `rotate(${tilt}deg) scaleX(-1)` : `rotate(${tilt}deg)`
         e.currentTarget.style.boxShadow = 'none'
       }}
     >
@@ -229,6 +231,8 @@ function BookShelf({ books, onBookClick, onAddClick, sortBy, setSortBy, filterSt
     { value: 'read', label: '✅ 읽음' },
     { value: 'reading', label: '📖 읽는 중' },
     { value: 'want', label: '🔖 읽고 싶어요' },
+    { value: 'stopped', label: '🚫 그만읽기' },
+    { value: 'later', label: '⏸ 나중에읽기' },
   ]
 
   const filteredBooks = filterStatus === 'all' ? books : books.filter(b => (b.status || 'read') === filterStatus)
@@ -1070,7 +1074,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.2.7
+          © kimsogenie · v.1.2.8
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
@@ -1220,6 +1224,8 @@ export default function Home() {
               { value: 'reading', label: '📖 읽는 중' },
               { value: 'read', label: '✅ 읽음' },
               { value: 'want', label: '🔖 읽고 싶어요' },
+              { value: 'stopped', label: '🚫 그만읽기' },
+              { value: 'later', label: '⏸ 나중에읽기' },
             ].map(s => (
               <button key={s.value} onClick={() => updateBook(b.id, 'status', s.value)} style={{
                 background: b.status === s.value ? C.text : 'transparent',
