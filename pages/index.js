@@ -1091,7 +1091,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.3.1
+          © kimsogenie · v.1.3.2
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
@@ -1104,96 +1104,100 @@ export default function Home() {
 
   if (view === 'wishlist') {
     const wishBooks = books.filter(b => b.status === 'want')
-    // 각 책마다 랜덤한 느낌의 위치/각도 (seed 기반)
-    const getCardStyle = (id, i) => {
-      const rotations = [-8, 5, -3, 7, -5, 4, -7, 6, -2, 8]
-      const rot = rotations[id % 10]
-      return { transform: `rotate(${rot}deg)` }
-    }
+    const rotations = [-12, 8, -5, 10, -7, 6, -10, 9, -3, 11, -8, 5]
+    const getCardStyle = (id) => ({ transform: `rotate(${rotations[id % 12]}deg)` })
+
     return (
-      <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg }}>
-        <NavBar onBack={() => setView('library')} title="위시리스트 🛒" right="" />
-        <div style={{ padding: '16px 20px 8px' }}>
-          <div style={{ fontSize: 11, color: C.muted, fontFamily: C.mono, letterSpacing: '0.1em' }}>
-            {wishBooks.length}권의 책이 담겨있어요
-          </div>
-        </div>
+      <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: '#F0EDE6' }}>
+        <NavBar onBack={() => setView('library')} title="위시리스트" right="" />
 
         {wishBooks.length === 0 ? (
-          <div style={{ textAlign: 'center', padding: '60px 20px', color: C.muted, fontFamily: C.font }}>
-            <div style={{ fontSize: 40, marginBottom: 12 }}>🛒</div>
+          <div style={{ textAlign: 'center', padding: '80px 20px', color: C.muted, fontFamily: C.font }}>
+            <div style={{ fontSize: 48, marginBottom: 14 }}>🛒</div>
             <div style={{ fontSize: 14 }}>읽고 싶은 책을 담아보세요</div>
             <div style={{ fontSize: 12, marginTop: 6, color: C.faint }}>책 상세 → 읽고 싶어요 태그</div>
           </div>
         ) : (
           <>
-            {/* 장바구니 카트 영역 */}
-            <div style={{ margin: '8px 20px 0', position: 'relative', paddingTop: 28 }}>
-              {/* 손잡이 SVG */}
-              <svg viewBox="0 0 300 28" style={{ position: 'absolute', top: 0, left: 0, right: 0, width: '100%', height: 28 }}>
-                <path d="M 60 26 Q 60 4 150 4 Q 240 4 240 26" fill="none" stroke="rgba(0,0,0,0.18)" strokeWidth="3" strokeLinecap="round"/>
-              </svg>
+            {/* 카트 영역 - 책들이 카트 위에 쏟아져 나오는 느낌 */}
+            <div style={{ position: 'relative', margin: '0 auto', width: '100%', maxWidth: 420, padding: '0 20px' }}>
 
-              {/* 카트 본체 */}
-              <div style={{
-                border: `2px solid rgba(0,0,0,0.15)`,
-                borderRadius: '0 0 16px 16px',
-                borderTop: `2px solid rgba(0,0,0,0.15)`,
-                padding: '18px 14px 20px',
-                background: 'rgba(255,255,255,0.5)',
-                position: 'relative',
-                overflow: 'hidden',
-              }}>
-                {/* 격자 배경 */}
-                <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', opacity: 0.06 }} xmlns="http://www.w3.org/2000/svg">
-                  <defs>
-                    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
-                      <path d="M 24 0 L 0 0 0 24" fill="none" stroke="#1A1A1A" strokeWidth="0.8"/>
-                    </pattern>
-                  </defs>
-                  <rect width="100%" height="100%" fill="url(#grid)" />
-                </svg>
-
-                {/* 책 표지들 */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', alignItems: 'flex-end', padding: '6px 4px', position: 'relative', zIndex: 1 }}>
-                  {wishBooks.map((b, i) => (
-                    <div
-                      key={b.id}
-                      onClick={() => { setSelectedBook(b); setShowNotes(false); setDetailTab('receipt'); setView('detail') }}
-                      style={{
-                        ...getCardStyle(b.id, i),
-                        cursor: 'pointer',
-                        transition: 'transform 0.2s, box-shadow 0.2s',
-                        flexShrink: 0,
-                      }}
-                      onMouseEnter={e => { e.currentTarget.style.transform = 'rotate(0deg) scale(1.08)'; e.currentTarget.style.zIndex = '10' }}
-                      onMouseLeave={e => { e.currentTarget.style.transform = `rotate(${[-8,5,-3,7,-5,4,-7,6,-2,8][b.id%10]}deg)`; e.currentTarget.style.zIndex = '1' }}
-                    >
-                      {b.thumbnail ? (
-                        <img src={b.thumbnail} alt={b.title} style={{ width: 68, height: 96, objectFit: 'cover', display: 'block', borderRadius: 2, boxShadow: '2px 4px 12px rgba(0,0,0,0.22)' }} />
-                      ) : (
-                        <div style={{ width: 68, height: 96, background: b.bg || getHashColor(b.title, b.author).bg, borderRadius: 2, boxShadow: '2px 4px 12px rgba(0,0,0,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 6 }}>
-                          <div style={{ fontSize: 9, color: b.spineText || '#1A1A1A', textAlign: 'center', lineHeight: 1.4, fontFamily: C.font, wordBreak: 'break-all' }}>{b.title}</div>
-                        </div>
-                      )}
+              {/* 카트 밖으로 삐져나온 책들 (상위 4권) */}
+              <div style={{ position: 'relative', height: 110, marginBottom: -20 }}>
+                {wishBooks.slice(0, Math.min(4, wishBooks.length)).map((b, i) => {
+                  const positions = [
+                    { left: '8%', top: 0, rot: -15 },
+                    { left: '28%', top: 10, rot: 8 },
+                    { left: '52%', top: 0, rot: -6 },
+                    { left: '72%', top: 8, rot: 12 },
+                  ]
+                  const pos = positions[i]
+                  return (
+                    <div key={b.id} onClick={() => { setSelectedBook(b); setShowNotes(false); setDetailTab('receipt'); setView('detail') }}
+                      style={{ position: 'absolute', left: pos.left, top: pos.top, transform: `rotate(${pos.rot}deg)`, cursor: 'pointer', zIndex: 4 - i }}>
+                      {b.thumbnail
+                        ? <img src={b.thumbnail} alt={b.title} style={{ width: 58, height: 82, objectFit: 'cover', borderRadius: 2, boxShadow: '3px 5px 14px rgba(0,0,0,0.25)', display: 'block' }} />
+                        : <div style={{ width: 58, height: 82, background: b.bg || getHashColor(b.title, b.author).bg, borderRadius: 2, boxShadow: '3px 5px 14px rgba(0,0,0,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 5 }}>
+                            <div style={{ fontSize: 8, color: b.spineText || '#1A1A1A', textAlign: 'center', lineHeight: 1.4, fontFamily: C.font, wordBreak: 'break-all' }}>{b.title}</div>
+                          </div>}
                     </div>
-                  ))}
-                </div>
-
-                {/* 카트 하단 테두리 강조 */}
-                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 4, background: 'rgba(0,0,0,0.06)', borderRadius: '0 0 14px 14px' }} />
+                  )
+                })}
               </div>
 
-              {/* 카트 바퀴 */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 32px' }}>
-                {[0,1].map(i => (
-                  <div key={i} style={{ width: 12, height: 12, borderRadius: '50%', border: '2px solid rgba(0,0,0,0.15)', background: C.bg }} />
+              {/* 와이어 바스켓 SVG */}
+              <svg viewBox="0 0 380 220" style={{ width: '100%', display: 'block', position: 'relative', zIndex: 5 }} xmlns="http://www.w3.org/2000/svg">
+                {/* 손잡이 */}
+                <path d="M 130 30 Q 130 5 190 5 Q 250 5 250 30" fill="none" stroke="#8B7355" strokeWidth="5" strokeLinecap="round"/>
+                <circle cx="128" cy="32" r="5" fill="#8B7355"/>
+                <circle cx="252" cy="32" r="5" fill="#8B7355"/>
+
+                {/* 카트 본체 */}
+                <path d="M 20 35 L 360 35 L 340 195 Q 338 210 320 210 L 60 210 Q 42 210 40 195 Z" fill="#F5F1EA" stroke="#8B7355" strokeWidth="3"/>
+
+                {/* 와이어 세로선 */}
+                {[60, 95, 130, 165, 200, 235, 270, 305].map((x, i) => (
+                  <line key={i} x1={x} y1="35" x2={x - 8 + (i * 1.5)} y2="210" stroke="#C4A882" strokeWidth="1.2" opacity="0.6"/>
+                ))}
+                {/* 와이어 가로선 */}
+                {[75, 110, 145, 178].map((y, i) => (
+                  <path key={i} d={`M ${22 + i * 5} ${y} Q 190 ${y - 4} ${358 - i * 5} ${y}`} fill="none" stroke="#C4A882" strokeWidth="1.2" opacity="0.6"/>
+                ))}
+
+                {/* 카트 상단 테두리 강조 */}
+                <line x1="20" y1="35" x2="360" y2="35" stroke="#8B7355" strokeWidth="3"/>
+
+                {/* 카트 하단 바 */}
+                <rect x="80" y="210" width="220" height="6" rx="3" fill="#8B7355"/>
+                {/* 바퀴 */}
+                <circle cx="110" cy="222" r="10" fill="none" stroke="#8B7355" strokeWidth="3.5"/>
+                <circle cx="110" cy="222" r="3" fill="#8B7355"/>
+                <circle cx="270" cy="222" r="10" fill="none" stroke="#8B7355" strokeWidth="3.5"/>
+                <circle cx="270" cy="222" r="3" fill="#8B7355"/>
+              </svg>
+
+              {/* 카트 안 책들 */}
+              <div style={{ position: 'absolute', top: 145, left: 40, right: 40, zIndex: 6, display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', alignItems: 'flex-end', padding: '0 10px' }}>
+                {wishBooks.slice(Math.min(4, wishBooks.length)).map((b) => (
+                  <div key={b.id} onClick={() => { setSelectedBook(b); setShowNotes(false); setDetailTab('receipt'); setView('detail') }}
+                    style={{ ...getCardStyle(b.id), cursor: 'pointer', transition: 'transform 0.15s', flexShrink: 0 }}
+                    onMouseEnter={e => e.currentTarget.style.transform = 'rotate(0deg) scale(1.08)'}
+                    onMouseLeave={e => e.currentTarget.style.transform = `rotate(${rotations[b.id % 12]}deg)`}>
+                    {b.thumbnail
+                      ? <img src={b.thumbnail} alt={b.title} style={{ width: 52, height: 74, objectFit: 'cover', borderRadius: 2, boxShadow: '2px 3px 8px rgba(0,0,0,0.2)', display: 'block' }} />
+                      : <div style={{ width: 52, height: 74, background: b.bg || getHashColor(b.title, b.author).bg, borderRadius: 2, boxShadow: '2px 3px 8px rgba(0,0,0,0.2)' }} />}
+                  </div>
                 ))}
               </div>
             </div>
 
+            {/* 권수 표시 */}
+            <div style={{ textAlign: 'center', padding: '8px 0 4px', fontSize: 11, color: C.muted, fontFamily: C.mono, letterSpacing: '0.1em' }}>
+              {wishBooks.length}권 담겨있어요
+            </div>
+
             {/* 책 목록 */}
-            <div style={{ padding: '20px 20px 40px' }}>
+            <div style={{ padding: '16px 20px 40px' }}>
               <div style={{ fontSize: 10, letterSpacing: '0.12em', color: C.muted, fontFamily: C.mono, marginBottom: 14 }}>WISHLIST</div>
               {wishBooks.map((b, i) => (
                 <div key={b.id} onClick={() => { setSelectedBook(b); setShowNotes(false); setDetailTab('receipt'); setView('detail') }}
