@@ -1091,7 +1091,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.3.7
+          © kimsogenie · v.1.3.8
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
@@ -1106,6 +1106,20 @@ export default function Home() {
   if (view === 'wishlist') {
     const wishBooks = books.filter(b => b.status === 'want')
     const rots = [-12, 8, -5, 10, -7, 6, -10, 9, -3, 11, -8, 5]
+    const slots = [
+      { top: 20, left: 10,  rot: -12, size: 68, z: 4 },
+      { top: 15, left: 36,  rot: 8,   size: 65, z: 4 },
+      { top: 18, left: 60,  rot: -6,  size: 67, z: 4 },
+      { top: 42, left: 7,   rot: 10,  size: 63, z: 3 },
+      { top: 40, left: 33,  rot: -5,  size: 65, z: 3 },
+      { top: 44, left: 59,  rot: 9,   size: 62, z: 3 },
+      { top: 64, left: 12,  rot: -9,  size: 60, z: 2 },
+      { top: 62, left: 38,  rot: 7,   size: 58, z: 2 },
+      { top: 66, left: 62,  rot: -7,  size: 60, z: 2 },
+      { top: 30, left: 78,  rot: 11,  size: 56, z: 3 },
+      { top: 52, left: 80,  rot: -8,  size: 54, z: 2 },
+      { top: 74, left: 82,  rot: 6,   size: 52, z: 1 },
+    ]
 
     return (
       <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: '#EDEAE3' }}>
