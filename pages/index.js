@@ -1091,7 +1091,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.3.8
+          © kimsogenie · v.1.3.9
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
@@ -1107,18 +1107,18 @@ export default function Home() {
     const wishBooks = books.filter(b => b.status === 'want')
     const rots = [-12, 8, -5, 10, -7, 6, -10, 9, -3, 11, -8, 5]
     const slots = [
-      { top: 20, left: 10,  rot: -12, size: 68, z: 4 },
-      { top: 15, left: 36,  rot: 8,   size: 65, z: 4 },
-      { top: 18, left: 60,  rot: -6,  size: 67, z: 4 },
-      { top: 42, left: 7,   rot: 10,  size: 63, z: 3 },
-      { top: 40, left: 33,  rot: -5,  size: 65, z: 3 },
-      { top: 44, left: 59,  rot: 9,   size: 62, z: 3 },
-      { top: 64, left: 12,  rot: -9,  size: 60, z: 2 },
-      { top: 62, left: 38,  rot: 7,   size: 58, z: 2 },
-      { top: 66, left: 62,  rot: -7,  size: 60, z: 2 },
-      { top: 30, left: 78,  rot: 11,  size: 56, z: 3 },
-      { top: 52, left: 80,  rot: -8,  size: 54, z: 2 },
-      { top: 74, left: 82,  rot: 6,   size: 52, z: 1 },
+      { top: 28, left: 12,  rot: -12, size: 64, z: 4 },
+      { top: 24, left: 36,  rot: 8,   size: 62, z: 4 },
+      { top: 26, left: 58,  rot: -6,  size: 64, z: 4 },
+      { top: 48, left: 10,  rot: 10,  size: 60, z: 3 },
+      { top: 46, left: 34,  rot: -5,  size: 62, z: 3 },
+      { top: 50, left: 58,  rot: 9,   size: 58, z: 3 },
+      { top: 66, left: 14,  rot: -9,  size: 56, z: 2 },
+      { top: 64, left: 38,  rot: 7,   size: 54, z: 2 },
+      { top: 68, left: 60,  rot: -7,  size: 56, z: 2 },
+      { top: 36, left: 76,  rot: 11,  size: 52, z: 3 },
+      { top: 54, left: 78,  rot: -8,  size: 50, z: 2 },
+      { top: 72, left: 76,  rot: 6,   size: 48, z: 1 },
     ]
 
     return (
@@ -1133,46 +1133,11 @@ export default function Home() {
           </div>
         ) : (
           <>
-            {/* 콜라주 영역 */}
-            <div style={{ position: 'relative', width: '100%', paddingTop: '90%', margin: '8px 0' }}>
+            {/* 바구니 + 책 콜라주 */}
+            <div style={{ position: 'relative', width: '100%', paddingTop: '110%' }}>
               <div style={{ position: 'absolute', inset: 0 }}>
 
-                {/* 바구니 SVG — 중앙 약간 아래 */}
-                <svg viewBox="0 0 400 320" style={{ position: 'absolute', top: '12%', left: '5%', width: '90%' }}>
-                  {/* 바구니 본체 - 살짝 원근감 */}
-                  <path d="M 30 80 L 370 80 L 350 290 Q 348 305 330 305 L 70 305 Q 52 305 50 290 Z"
-                    fill="#F7F3EC" stroke="#9B8060" strokeWidth="3.5"/>
-
-                  {/* 격자 세로선 */}
-                  {[70,105,140,175,210,245,280,315].map((x,i) => (
-                    <line key={i} x1={x} y1="80" x2={x + (i-4)*2} y2="305" stroke="#C4A882" strokeWidth="1" opacity="0.5"/>
-                  ))}
-                  {/* 격자 가로선 */}
-                  {[120,160,200,240].map((y,i) => (
-                    <path key={i} d={`M ${32+i*4} ${y} Q 200 ${y-3} ${368-i*4} ${y}`}
-                      fill="none" stroke="#C4A882" strokeWidth="1" opacity="0.5"/>
-                  ))}
-
-                  {/* 바구니 상단 테두리 */}
-                  <rect x="28" y="72" width="344" height="14" rx="7" fill="#9B8060"/>
-
-                  {/* 손잡이 */}
-                  <path d="M 100 72 Q 100 28 200 28 Q 300 28 300 72"
-                    fill="none" stroke="#9B8060" strokeWidth="8" strokeLinecap="round"/>
-                  <circle cx="100" cy="72" r="7" fill="#7A6245"/>
-                  <circle cx="300" cy="72" r="7" fill="#7A6245"/>
-
-                  {/* 바구니 하단 바 */}
-                  <rect x="80" y="305" width="240" height="7" rx="3.5" fill="#9B8060"/>
-                  {/* 다리 */}
-                  <rect x="100" y="310" width="8" height="16" rx="2" fill="#9B8060"/>
-                  <rect x="292" y="310" width="8" height="16" rx="2" fill="#9B8060"/>
-                  {/* 발 */}
-                  <ellipse cx="104" cy="326" rx="12" ry="4" fill="#7A6245"/>
-                  <ellipse cx="296" cy="326" rx="12" ry="4" fill="#7A6245"/>
-                </svg>
-
-                {/* 책 표지들 — 절대 위치 */}
+                {/* 책 표지들 — 바구니 안쪽 */}
                 {wishBooks.slice(0, 12).map((b, i) => {
                   const s = slots[i % slots.length]
                   const w = s.size
@@ -1200,11 +1165,11 @@ export default function Home() {
                     </div>
                   )
                 })}
-              </div>
-            </div>
 
-            <div style={{ textAlign: 'center', fontSize: 12, color: C.muted, fontFamily: C.font, marginTop: 4, marginBottom: 4 }}>
-              {wishBooks.length}권 담겨있어요 {wishBooks.length > 12 ? `(+${wishBooks.length - 12}권 더)` : ''}
+                {/* basket.png — 책들 위에 올려서 테두리가 앞에 오게 */}
+                <img src="/basket.png" alt="basket"
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', zIndex: 20, pointerEvents: 'none' }} />
+              </div>
             </div>
 
             {/* 책 목록 */}
