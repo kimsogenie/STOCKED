@@ -1091,7 +1091,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.3.6
+          © kimsogenie · v.1.3.7
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
@@ -1108,6 +1108,8 @@ export default function Home() {
     const rots = [-12, 8, -5, 10, -7, 6, -10, 9, -3, 11, -8, 5]
 
     return (
+      <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: '#EDEAE3' }}>
+        <NavBar onBack={() => setView('library')} title="위시리스트" right="" />
 
         {wishBooks.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '80px 20px', color: C.muted, fontFamily: C.font }}>
