@@ -32,7 +32,7 @@ const C = {
   border: 'rgba(0,0,0,0.1)',
   borderMid: 'rgba(0,0,0,0.2)',
   font: "'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif",
-  mono: "'Courier New', Courier, monospace",
+  mono: "'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif",
   receipt: "'NeoDGM', 'Fixedsys', 'Courier New', monospace",
 }
 
@@ -1091,7 +1091,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.3.2
+          © kimsogenie · v.1.3.3
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
@@ -1104,11 +1104,10 @@ export default function Home() {
 
   if (view === 'wishlist') {
     const wishBooks = books.filter(b => b.status === 'want')
-    const rotations = [-12, 8, -5, 10, -7, 6, -10, 9, -3, 11, -8, 5]
-    const getCardStyle = (id) => ({ transform: `rotate(${rotations[id % 12]}deg)` })
+    const rots = [-12, 8, -5, 10, -7, 6, -10, 9, -3, 11, -8, 5]
 
     return (
-      <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: '#F0EDE6' }}>
+      <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: '#EDE8DF' }}>
         <NavBar onBack={() => setView('library')} title="위시리스트" right="" />
 
         {wishBooks.length === 0 ? (
@@ -1119,90 +1118,79 @@ export default function Home() {
           </div>
         ) : (
           <>
-            {/* 카트 영역 - 책들이 카트 위에 쏟아져 나오는 느낌 */}
-            <div style={{ position: 'relative', margin: '0 auto', width: '100%', maxWidth: 420, padding: '0 20px' }}>
+            {/* 장바구니 */}
+            <div style={{ padding: '16px 24px 0' }}>
+              {/* 손잡이 */}
+              <div style={{ display: 'flex', justifyContent: 'center', marginBottom: -2 }}>
+                <div style={{
+                  width: 100, height: 22,
+                  border: '3px solid #9B8060',
+                  borderBottom: 'none',
+                  borderRadius: '50px 50px 0 0',
+                  background: 'transparent',
+                }} />
+              </div>
 
-              {/* 카트 밖으로 삐져나온 책들 (상위 4권) */}
-              <div style={{ position: 'relative', height: 110, marginBottom: -20 }}>
-                {wishBooks.slice(0, Math.min(4, wishBooks.length)).map((b, i) => {
-                  const positions = [
-                    { left: '8%', top: 0, rot: -15 },
-                    { left: '28%', top: 10, rot: 8 },
-                    { left: '52%', top: 0, rot: -6 },
-                    { left: '72%', top: 8, rot: 12 },
-                  ]
-                  const pos = positions[i]
-                  return (
-                    <div key={b.id} onClick={() => { setSelectedBook(b); setShowNotes(false); setDetailTab('receipt'); setView('detail') }}
-                      style={{ position: 'absolute', left: pos.left, top: pos.top, transform: `rotate(${pos.rot}deg)`, cursor: 'pointer', zIndex: 4 - i }}>
+              {/* 바스켓 본체 */}
+              <div style={{
+                background: '#F5F0E8',
+                border: '2.5px solid #9B8060',
+                borderRadius: '8px 8px 20px 20px',
+                padding: '16px 14px 18px',
+                position: 'relative',
+                overflow: 'hidden',
+              }}>
+                {/* 격자 배경 */}
+                <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none' }}>
+                  <defs>
+                    <pattern id="wg" width="32" height="32" patternUnits="userSpaceOnUse">
+                      <line x1="32" y1="0" x2="32" y2="32" stroke="#9B8060" strokeWidth="0.8" opacity="0.35"/>
+                      <line x1="0" y1="32" x2="32" y2="32" stroke="#9B8060" strokeWidth="0.8" opacity="0.35"/>
+                    </pattern>
+                  </defs>
+                  <rect width="100%" height="100%" fill="url(#wg)"/>
+                </svg>
+
+                {/* 책 표지들 */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', alignItems: 'flex-end', position: 'relative', zIndex: 1, minHeight: 120 }}>
+                  {wishBooks.map((b) => (
+                    <div key={b.id}
+                      onClick={() => { setSelectedBook(b); setShowNotes(false); setDetailTab('receipt'); setView('detail') }}
+                      style={{ transform: `rotate(${rots[b.id % 12]}deg)`, cursor: 'pointer', transition: 'transform 0.18s', flexShrink: 0 }}
+                      onMouseEnter={e => e.currentTarget.style.transform = 'rotate(0deg) scale(1.08)'}
+                      onMouseLeave={e => e.currentTarget.style.transform = `rotate(${rots[b.id % 12]}deg)`}>
                       {b.thumbnail
-                        ? <img src={b.thumbnail} alt={b.title} style={{ width: 58, height: 82, objectFit: 'cover', borderRadius: 2, boxShadow: '3px 5px 14px rgba(0,0,0,0.25)', display: 'block' }} />
-                        : <div style={{ width: 58, height: 82, background: b.bg || getHashColor(b.title, b.author).bg, borderRadius: 2, boxShadow: '3px 5px 14px rgba(0,0,0,0.25)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 5 }}>
+                        ? <img src={b.thumbnail} alt={b.title} style={{ width: 64, height: 90, objectFit: 'cover', borderRadius: 2, boxShadow: '3px 5px 12px rgba(0,0,0,0.28)', display: 'block' }} />
+                        : <div style={{ width: 64, height: 90, background: b.bg || getHashColor(b.title, b.author).bg, borderRadius: 2, boxShadow: '3px 5px 12px rgba(0,0,0,0.28)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 5 }}>
                             <div style={{ fontSize: 8, color: b.spineText || '#1A1A1A', textAlign: 'center', lineHeight: 1.4, fontFamily: C.font, wordBreak: 'break-all' }}>{b.title}</div>
                           </div>}
                     </div>
-                  )
-                })}
+                  ))}
+                </div>
               </div>
 
-              {/* 와이어 바스켓 SVG */}
-              <svg viewBox="0 0 380 220" style={{ width: '100%', display: 'block', position: 'relative', zIndex: 5 }} xmlns="http://www.w3.org/2000/svg">
-                {/* 손잡이 */}
-                <path d="M 130 30 Q 130 5 190 5 Q 250 5 250 30" fill="none" stroke="#8B7355" strokeWidth="5" strokeLinecap="round"/>
-                <circle cx="128" cy="32" r="5" fill="#8B7355"/>
-                <circle cx="252" cy="32" r="5" fill="#8B7355"/>
-
-                {/* 카트 본체 */}
-                <path d="M 20 35 L 360 35 L 340 195 Q 338 210 320 210 L 60 210 Q 42 210 40 195 Z" fill="#F5F1EA" stroke="#8B7355" strokeWidth="3"/>
-
-                {/* 와이어 세로선 */}
-                {[60, 95, 130, 165, 200, 235, 270, 305].map((x, i) => (
-                  <line key={i} x1={x} y1="35" x2={x - 8 + (i * 1.5)} y2="210" stroke="#C4A882" strokeWidth="1.2" opacity="0.6"/>
-                ))}
-                {/* 와이어 가로선 */}
-                {[75, 110, 145, 178].map((y, i) => (
-                  <path key={i} d={`M ${22 + i * 5} ${y} Q 190 ${y - 4} ${358 - i * 5} ${y}`} fill="none" stroke="#C4A882" strokeWidth="1.2" opacity="0.6"/>
-                ))}
-
-                {/* 카트 상단 테두리 강조 */}
-                <line x1="20" y1="35" x2="360" y2="35" stroke="#8B7355" strokeWidth="3"/>
-
-                {/* 카트 하단 바 */}
-                <rect x="80" y="210" width="220" height="6" rx="3" fill="#8B7355"/>
-                {/* 바퀴 */}
-                <circle cx="110" cy="222" r="10" fill="none" stroke="#8B7355" strokeWidth="3.5"/>
-                <circle cx="110" cy="222" r="3" fill="#8B7355"/>
-                <circle cx="270" cy="222" r="10" fill="none" stroke="#8B7355" strokeWidth="3.5"/>
-                <circle cx="270" cy="222" r="3" fill="#8B7355"/>
-              </svg>
-
-              {/* 카트 안 책들 */}
-              <div style={{ position: 'absolute', top: 145, left: 40, right: 40, zIndex: 6, display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', alignItems: 'flex-end', padding: '0 10px' }}>
-                {wishBooks.slice(Math.min(4, wishBooks.length)).map((b) => (
-                  <div key={b.id} onClick={() => { setSelectedBook(b); setShowNotes(false); setDetailTab('receipt'); setView('detail') }}
-                    style={{ ...getCardStyle(b.id), cursor: 'pointer', transition: 'transform 0.15s', flexShrink: 0 }}
-                    onMouseEnter={e => e.currentTarget.style.transform = 'rotate(0deg) scale(1.08)'}
-                    onMouseLeave={e => e.currentTarget.style.transform = `rotate(${rotations[b.id % 12]}deg)`}>
-                    {b.thumbnail
-                      ? <img src={b.thumbnail} alt={b.title} style={{ width: 52, height: 74, objectFit: 'cover', borderRadius: 2, boxShadow: '2px 3px 8px rgba(0,0,0,0.2)', display: 'block' }} />
-                      : <div style={{ width: 52, height: 74, background: b.bg || getHashColor(b.title, b.author).bg, borderRadius: 2, boxShadow: '2px 3px 8px rgba(0,0,0,0.2)' }} />}
+              {/* 바퀴 */}
+              <div style={{ display: 'flex', justifyContent: 'space-around', padding: '4px 40px 0' }}>
+                {[0,1].map(i => (
+                  <div key={i}>
+                    <div style={{ width: 3, height: 8, background: '#9B8060', margin: '0 auto' }} />
+                    <div style={{ width: 20, height: 20, borderRadius: '50%', border: '3px solid #9B8060', background: '#EDE8DF' }} />
                   </div>
                 ))}
               </div>
-            </div>
 
-            {/* 권수 표시 */}
-            <div style={{ textAlign: 'center', padding: '8px 0 4px', fontSize: 11, color: C.muted, fontFamily: C.mono, letterSpacing: '0.1em' }}>
-              {wishBooks.length}권 담겨있어요
+              <div style={{ textAlign: 'center', padding: '8px 0 4px', fontSize: 12, color: C.muted, fontFamily: C.font }}>
+                {wishBooks.length}권 담겨있어요
+              </div>
             </div>
 
             {/* 책 목록 */}
             <div style={{ padding: '16px 20px 40px' }}>
-              <div style={{ fontSize: 10, letterSpacing: '0.12em', color: C.muted, fontFamily: C.mono, marginBottom: 14 }}>WISHLIST</div>
+              <div style={{ fontSize: 10, letterSpacing: '0.12em', color: C.muted, fontFamily: C.font, marginBottom: 14 }}>WISHLIST</div>
               {wishBooks.map((b, i) => (
                 <div key={b.id} onClick={() => { setSelectedBook(b); setShowNotes(false); setDetailTab('receipt'); setView('detail') }}
                   style={{ display: 'flex', gap: 14, padding: '12px 0', borderBottom: `0.5px solid ${C.border}`, cursor: 'pointer', alignItems: 'center' }}>
-                  <div style={{ fontSize: 12, color: C.faint, fontFamily: C.mono, minWidth: 20 }}>{String(i+1).padStart(2,'0')}</div>
+                  <div style={{ fontSize: 12, color: C.faint, fontFamily: C.font, minWidth: 20 }}>{String(i+1).padStart(2,'0')}</div>
                   {b.thumbnail ? <img src={b.thumbnail} alt={b.title} style={{ width: 40, height: 56, objectFit: 'cover', flexShrink: 0, borderRadius: 1 }} />
                     : <div style={{ width: 40, height: 56, background: b.bg || '#ddd', flexShrink: 0, borderRadius: 1 }} />}
                   <div style={{ flex: 1, minWidth: 0 }}>
@@ -1210,7 +1198,7 @@ export default function Home() {
                     <div style={{ fontSize: 12, color: C.muted, fontFamily: C.font }}>{b.author}</div>
                   </div>
                   <button onClick={(e) => { e.stopPropagation(); updateBook(b.id, 'status', 'reading') }}
-                    style={{ fontSize: 10, color: C.text, border: `0.5px solid ${C.borderMid}`, background: 'none', padding: '5px 8px', cursor: 'pointer', fontFamily: C.mono, flexShrink: 0 }}>
+                    style={{ fontSize: 10, color: C.text, border: `0.5px solid ${C.borderMid}`, background: 'none', padding: '5px 8px', cursor: 'pointer', fontFamily: C.font, flexShrink: 0 }}>
                     읽기 시작
                   </button>
                 </div>
