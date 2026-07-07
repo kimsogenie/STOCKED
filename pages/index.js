@@ -109,17 +109,17 @@ function BookSpine({ b, onClick }) {
         boxSizing: 'border-box',
         transition: 'transform 0.2s ease, box-shadow 0.2s ease',
         padding: '6px 3px',
-        transform: isFlipped ? `rotate(${tilt}deg) scaleX(-1)` : `rotate(${tilt}deg)`,
+        transform: isFlipped ? `rotate(${tilt + 180}deg)` : `rotate(${tilt}deg)`,
         transformOrigin: 'bottom center',
         opacity: isFlipped ? 0.55 : 1,
         alignSelf: 'flex-end',
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform = isFlipped ? `rotate(${tilt}deg) scaleX(-1) translateY(-10px)` : `rotate(${tilt}deg) translateY(-10px)`
+        e.currentTarget.style.transform = isFlipped ? `rotate(${tilt + 180}deg) translateY(-10px)` : `rotate(${tilt}deg) translateY(-10px)`
         e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,0,0,0.16)'
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.transform = isFlipped ? `rotate(${tilt}deg) scaleX(-1)` : `rotate(${tilt}deg)`
+        e.currentTarget.style.transform = isFlipped ? `rotate(${tilt + 180}deg)` : `rotate(${tilt}deg)`
         e.currentTarget.style.boxShadow = 'none'
       }}
     >
@@ -339,7 +339,7 @@ function BookShelf({ books, onBookClick, onAddClick, sortBy, setSortBy, filterSt
                       {getRangesForDay(day).map((r, ri) => {
                         const isStart = r.start.getDate() === day && r.start.getMonth() === calMonth - 1 && r.start.getFullYear() === calYear
                         const isEnd = r.end.getDate() === day && r.end.getMonth() === calMonth - 1 && r.end.getFullYear() === calYear
-                        const colors = getHashColor(r.b.title, r.b.author)
+                        const colors = (r.b.bg && r.b.bg !== 'null') ? { bg: r.b.bg, text: r.b.spineText || '#1A1A1A' } : getHashColor(r.b.title, r.b.author)
                         return (
                           <div key={ri} onClick={() => onBookClick(r.b)} style={{
                             height: 6, background: colors.bg, marginBottom: 2, cursor: 'pointer',
@@ -570,6 +570,7 @@ export default function Home() {
         publisher: newBook.publisher, thumbnail: newBook.thumbnail, read_date: newBook.readDate,
         pages: newBook.pages, h: newBook.h, bg: newBook.bg, spine_text: newBook.spineText,
         fp: newBook.fp, receipts: newBook.receipts, status: newBook.status || 'read', rating: 0,
+        start_date: newBook.startDate || '',
       })
     }
   }
@@ -656,11 +657,13 @@ export default function Home() {
       return { bg: `rgb(${r},${g},${b})`, text: `rgb(${tr},${tg},${tb})` }
     })()
 
+    const today = new Date().toLocaleDateString('ko-KR').replace(/\. /g, '.').slice(0, -1)
     const newBook = {
       id: Date.now(), title: kakaoBook.title, author: kakaoBook.authors?.join(', ') || '',
       publisher: kakaoBook.publisher || '', thumbnail: kakaoBook.thumbnail || '',
       isbn: isbn || '',
-      readDate: new Date().toLocaleDateString('ko-KR').replace(/\. /g, '.').slice(0, -1),
+      startDate: today,
+      readDate: today,
       pages, h: SPINE_H,
       bg: colorSet.bg, spineText: colorSet.text,
       fp: books.length % FONT_PAIRS.length, receipts: [],
@@ -1019,6 +1022,14 @@ export default function Home() {
         <div style={{ padding: '20px 20px 16px', borderBottom: `0.5px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <img src="/logo.png" alt="STOCKED" style={{ height: 28, objectFit: 'contain' }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button onClick={() => setView('wishlist')} style={{ fontSize: 18, color: C.muted, background: 'none', border: 'none', cursor: 'pointer', position: 'relative' }}>
+              🛒
+              {books.filter(b => b.status === 'want').length > 0 && (
+                <span style={{ position: 'absolute', top: -4, right: -6, background: C.text, color: C.bg, borderRadius: '50%', width: 14, height: 14, fontSize: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: C.mono }}>
+                  {books.filter(b => b.status === 'want').length}
+                </span>
+              )}
+            </button>
             {isGuest && <button onClick={loginWithGoogle} style={{ fontSize: 11, color: C.text, background: 'none', border: `0.5px solid ${C.borderMid}`, cursor: 'pointer', fontFamily: C.font, padding: '5px 10px' }}>로그인</button>}
             {!isGuest && <button onClick={logout} style={{ fontSize: 11, color: C.faint, background: 'none', border: 'none', cursor: 'pointer', fontFamily: C.font }}>로그아웃</button>}
             <button onClick={() => setShowOnboarding(true)} style={{ fontSize: 16, color: C.muted, background: 'none', border: 'none', cursor: 'pointer' }}>?</button>
@@ -1074,13 +1085,141 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.2.8
+          © kimsogenie · v.1.3.0
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
             오류 신고하기
           </button>
         </div>
+      </div>
+    )
+  }
+
+  if (view === 'wishlist') {
+    const wishBooks = books.filter(b => b.status === 'want')
+    // 각 책마다 랜덤한 느낌의 위치/각도 (seed 기반)
+    const getCardStyle = (id, i) => {
+      const rotations = [-8, 5, -3, 7, -5, 4, -7, 6, -2, 8]
+      const rot = rotations[id % 10]
+      return { transform: `rotate(${rot}deg)` }
+    }
+    return (
+      <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg }}>
+        <NavBar onBack={() => setView('library')} title="위시리스트 🛒" right="" />
+        <div style={{ padding: '16px 20px 8px' }}>
+          <div style={{ fontSize: 11, color: C.muted, fontFamily: C.mono, letterSpacing: '0.1em' }}>
+            {wishBooks.length}권의 책이 담겨있어요
+          </div>
+        </div>
+
+        {wishBooks.length === 0 ? (
+          <div style={{ textAlign: 'center', padding: '60px 20px', color: C.muted, fontFamily: C.font }}>
+            <div style={{ fontSize: 40, marginBottom: 12 }}>🛒</div>
+            <div style={{ fontSize: 14 }}>읽고 싶은 책을 담아보세요</div>
+            <div style={{ fontSize: 12, marginTop: 6, color: C.faint }}>책 상세 → 읽고 싶어요 태그</div>
+          </div>
+        ) : (
+          <>
+            {/* 장바구니 카트 영역 */}
+            <div style={{ margin: '0 16px', position: 'relative' }}>
+              {/* 카트 테두리 */}
+              <div style={{
+                border: `2px solid rgba(0,0,0,0.12)`,
+                borderRadius: 8,
+                padding: '20px 12px 16px',
+                background: 'rgba(0,0,0,0.01)',
+                minHeight: 320,
+                position: 'relative',
+              }}>
+                {/* 카트 손잡이 */}
+                <div style={{
+                  position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)',
+                  width: 80, height: 14, borderRadius: '8px 8px 0 0',
+                  border: `2px solid rgba(0,0,0,0.12)`, borderBottom: 'none',
+                  background: C.bg,
+                }} />
+
+                {/* 책 표지들 흩어지게 배치 */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', alignItems: 'flex-end', padding: '8px 4px' }}>
+                  {wishBooks.map((b, i) => (
+                    <div
+                      key={b.id}
+                      onClick={() => { setSelectedBook(b); setShowNotes(false); setDetailTab('receipt'); setView('detail') }}
+                      style={{
+                        ...getCardStyle(b.id, i),
+                        cursor: 'pointer',
+                        transition: 'transform 0.2s',
+                        flexShrink: 0,
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.transform = 'rotate(0deg) scale(1.05)'}
+                      onMouseLeave={e => e.currentTarget.style.transform = `rotate(${[-8,5,-3,7,-5,4,-7,6,-2,8][b.id%10]}deg)`}
+                    >
+                      <div style={{ position: 'relative' }}>
+                        {b.thumbnail ? (
+                          <img
+                            src={b.thumbnail}
+                            alt={b.title}
+                            style={{
+                              width: 72,
+                              height: 100,
+                              objectFit: 'cover',
+                              display: 'block',
+                              borderRadius: 2,
+                              boxShadow: '2px 3px 10px rgba(0,0,0,0.18)',
+                            }}
+                          />
+                        ) : (
+                          <div style={{
+                            width: 72, height: 100,
+                            background: b.bg || getHashColor(b.title, b.author).bg,
+                            borderRadius: 2,
+                            boxShadow: '2px 3px 10px rgba(0,0,0,0.18)',
+                            display: 'flex', alignItems: 'center', justifyContent: 'center',
+                            padding: 6,
+                          }}>
+                            <div style={{ fontSize: 9, color: b.spineText || '#1A1A1A', textAlign: 'center', lineHeight: 1.4, fontFamily: C.font, wordBreak: 'break-all' }}>{b.title}</div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* 카트 격자 선 */}
+                <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', borderRadius: 8, overflow: 'hidden' }}>
+                  {[1,2,3].map(n => (
+                    <div key={n} style={{ position: 'absolute', left: 0, right: 0, top: `${n * 25}%`, height: '0.5px', background: 'rgba(0,0,0,0.05)' }} />
+                  ))}
+                  {[1,2,3].map(n => (
+                    <div key={n} style={{ position: 'absolute', top: 0, bottom: 0, left: `${n * 25}%`, width: '0.5px', background: 'rgba(0,0,0,0.05)' }} />
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* 책 목록 */}
+            <div style={{ padding: '20px 20px 40px' }}>
+              <div style={{ fontSize: 10, letterSpacing: '0.12em', color: C.muted, fontFamily: C.mono, marginBottom: 14 }}>WISHLIST</div>
+              {wishBooks.map((b, i) => (
+                <div key={b.id} onClick={() => { setSelectedBook(b); setShowNotes(false); setDetailTab('receipt'); setView('detail') }}
+                  style={{ display: 'flex', gap: 14, padding: '12px 0', borderBottom: `0.5px solid ${C.border}`, cursor: 'pointer', alignItems: 'center' }}>
+                  <div style={{ fontSize: 12, color: C.faint, fontFamily: C.mono, minWidth: 20 }}>{String(i+1).padStart(2,'0')}</div>
+                  {b.thumbnail ? <img src={b.thumbnail} alt={b.title} style={{ width: 40, height: 56, objectFit: 'cover', flexShrink: 0, borderRadius: 1 }} />
+                    : <div style={{ width: 40, height: 56, background: b.bg || '#ddd', flexShrink: 0, borderRadius: 1 }} />}
+                  <div style={{ flex: 1, minWidth: 0 }}>
+                    <div style={{ fontSize: 14, fontWeight: 600, color: C.text, fontFamily: C.font, marginBottom: 2, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{b.title}</div>
+                    <div style={{ fontSize: 12, color: C.muted, fontFamily: C.font }}>{b.author}</div>
+                  </div>
+                  <button onClick={(e) => { e.stopPropagation(); updateBook(b.id, 'status', 'reading') }}
+                    style={{ fontSize: 10, color: C.text, border: `0.5px solid ${C.borderMid}`, background: 'none', padding: '5px 8px', cursor: 'pointer', fontFamily: C.mono, flexShrink: 0 }}>
+                    읽기 시작
+                  </button>
+                </div>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     )
   }
