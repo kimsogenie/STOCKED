@@ -109,17 +109,18 @@ function BookSpine({ b, onClick }) {
         boxSizing: 'border-box',
         transition: 'transform 0.2s ease, box-shadow 0.2s ease',
         padding: '6px 3px',
-        transform: isFlipped ? `rotate(${tilt + 180}deg)` : `rotate(${tilt}deg)`,
+        transform: `rotate(${tilt}deg)`,
         transformOrigin: 'bottom center',
-        opacity: isFlipped ? 0.55 : 1,
+        opacity: isFlipped ? 0.4 : 1,
+        filter: isFlipped ? 'grayscale(60%)' : 'none',
         alignSelf: 'flex-end',
       }}
       onMouseEnter={(e) => {
-        e.currentTarget.style.transform = isFlipped ? `rotate(${tilt + 180}deg) translateY(-10px)` : `rotate(${tilt}deg) translateY(-10px)`
+        e.currentTarget.style.transform = `rotate(${tilt}deg) translateY(-10px)`
         e.currentTarget.style.boxShadow = '0 8px 20px rgba(0,0,0,0.16)'
       }}
       onMouseLeave={(e) => {
-        e.currentTarget.style.transform = isFlipped ? `rotate(${tilt + 180}deg)` : `rotate(${tilt}deg)`
+        e.currentTarget.style.transform = `rotate(${tilt}deg)`
         e.currentTarget.style.boxShadow = 'none'
       }}
     >
@@ -235,7 +236,12 @@ function BookShelf({ books, onBookClick, onAddClick, sortBy, setSortBy, filterSt
     { value: 'later', label: '⏸ 나중에읽기' },
   ]
 
-  const filteredBooks = filterStatus === 'all' ? books : books.filter(b => (b.status || 'read') === filterStatus)
+  const filteredBooks = (() => {
+    const base = filterStatus === 'all'
+      ? books.filter(b => b.status !== 'want')  // 메인 서재에서 위시리스트 제외
+      : books.filter(b => (b.status || 'read') === filterStatus)
+    return base
+  })()
 
   const grouped = (() => {
     if (sortBy === 'default') return [{ label: null, books: filteredBooks }]
@@ -1085,7 +1091,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.3.0
+          © kimsogenie · v.1.3.1
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
@@ -1122,26 +1128,34 @@ export default function Home() {
         ) : (
           <>
             {/* 장바구니 카트 영역 */}
-            <div style={{ margin: '0 16px', position: 'relative' }}>
-              {/* 카트 테두리 */}
-              <div style={{
-                border: `2px solid rgba(0,0,0,0.12)`,
-                borderRadius: 8,
-                padding: '20px 12px 16px',
-                background: 'rgba(0,0,0,0.01)',
-                minHeight: 320,
-                position: 'relative',
-              }}>
-                {/* 카트 손잡이 */}
-                <div style={{
-                  position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)',
-                  width: 80, height: 14, borderRadius: '8px 8px 0 0',
-                  border: `2px solid rgba(0,0,0,0.12)`, borderBottom: 'none',
-                  background: C.bg,
-                }} />
+            <div style={{ margin: '8px 20px 0', position: 'relative', paddingTop: 28 }}>
+              {/* 손잡이 SVG */}
+              <svg viewBox="0 0 300 28" style={{ position: 'absolute', top: 0, left: 0, right: 0, width: '100%', height: 28 }}>
+                <path d="M 60 26 Q 60 4 150 4 Q 240 4 240 26" fill="none" stroke="rgba(0,0,0,0.18)" strokeWidth="3" strokeLinecap="round"/>
+              </svg>
 
-                {/* 책 표지들 흩어지게 배치 */}
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', alignItems: 'flex-end', padding: '8px 4px' }}>
+              {/* 카트 본체 */}
+              <div style={{
+                border: `2px solid rgba(0,0,0,0.15)`,
+                borderRadius: '0 0 16px 16px',
+                borderTop: `2px solid rgba(0,0,0,0.15)`,
+                padding: '18px 14px 20px',
+                background: 'rgba(255,255,255,0.5)',
+                position: 'relative',
+                overflow: 'hidden',
+              }}>
+                {/* 격자 배경 */}
+                <svg style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', pointerEvents: 'none', opacity: 0.06 }} xmlns="http://www.w3.org/2000/svg">
+                  <defs>
+                    <pattern id="grid" width="24" height="24" patternUnits="userSpaceOnUse">
+                      <path d="M 24 0 L 0 0 0 24" fill="none" stroke="#1A1A1A" strokeWidth="0.8"/>
+                    </pattern>
+                  </defs>
+                  <rect width="100%" height="100%" fill="url(#grid)" />
+                </svg>
+
+                {/* 책 표지들 */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 10, justifyContent: 'center', alignItems: 'flex-end', padding: '6px 4px', position: 'relative', zIndex: 1 }}>
                   {wishBooks.map((b, i) => (
                     <div
                       key={b.id}
@@ -1149,52 +1163,32 @@ export default function Home() {
                       style={{
                         ...getCardStyle(b.id, i),
                         cursor: 'pointer',
-                        transition: 'transform 0.2s',
+                        transition: 'transform 0.2s, box-shadow 0.2s',
                         flexShrink: 0,
                       }}
-                      onMouseEnter={e => e.currentTarget.style.transform = 'rotate(0deg) scale(1.05)'}
-                      onMouseLeave={e => e.currentTarget.style.transform = `rotate(${[-8,5,-3,7,-5,4,-7,6,-2,8][b.id%10]}deg)`}
+                      onMouseEnter={e => { e.currentTarget.style.transform = 'rotate(0deg) scale(1.08)'; e.currentTarget.style.zIndex = '10' }}
+                      onMouseLeave={e => { e.currentTarget.style.transform = `rotate(${[-8,5,-3,7,-5,4,-7,6,-2,8][b.id%10]}deg)`; e.currentTarget.style.zIndex = '1' }}
                     >
-                      <div style={{ position: 'relative' }}>
-                        {b.thumbnail ? (
-                          <img
-                            src={b.thumbnail}
-                            alt={b.title}
-                            style={{
-                              width: 72,
-                              height: 100,
-                              objectFit: 'cover',
-                              display: 'block',
-                              borderRadius: 2,
-                              boxShadow: '2px 3px 10px rgba(0,0,0,0.18)',
-                            }}
-                          />
-                        ) : (
-                          <div style={{
-                            width: 72, height: 100,
-                            background: b.bg || getHashColor(b.title, b.author).bg,
-                            borderRadius: 2,
-                            boxShadow: '2px 3px 10px rgba(0,0,0,0.18)',
-                            display: 'flex', alignItems: 'center', justifyContent: 'center',
-                            padding: 6,
-                          }}>
-                            <div style={{ fontSize: 9, color: b.spineText || '#1A1A1A', textAlign: 'center', lineHeight: 1.4, fontFamily: C.font, wordBreak: 'break-all' }}>{b.title}</div>
-                          </div>
-                        )}
-                      </div>
+                      {b.thumbnail ? (
+                        <img src={b.thumbnail} alt={b.title} style={{ width: 68, height: 96, objectFit: 'cover', display: 'block', borderRadius: 2, boxShadow: '2px 4px 12px rgba(0,0,0,0.22)' }} />
+                      ) : (
+                        <div style={{ width: 68, height: 96, background: b.bg || getHashColor(b.title, b.author).bg, borderRadius: 2, boxShadow: '2px 4px 12px rgba(0,0,0,0.22)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 6 }}>
+                          <div style={{ fontSize: 9, color: b.spineText || '#1A1A1A', textAlign: 'center', lineHeight: 1.4, fontFamily: C.font, wordBreak: 'break-all' }}>{b.title}</div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
 
-                {/* 카트 격자 선 */}
-                <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', borderRadius: 8, overflow: 'hidden' }}>
-                  {[1,2,3].map(n => (
-                    <div key={n} style={{ position: 'absolute', left: 0, right: 0, top: `${n * 25}%`, height: '0.5px', background: 'rgba(0,0,0,0.05)' }} />
-                  ))}
-                  {[1,2,3].map(n => (
-                    <div key={n} style={{ position: 'absolute', top: 0, bottom: 0, left: `${n * 25}%`, width: '0.5px', background: 'rgba(0,0,0,0.05)' }} />
-                  ))}
-                </div>
+                {/* 카트 하단 테두리 강조 */}
+                <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 4, background: 'rgba(0,0,0,0.06)', borderRadius: '0 0 14px 14px' }} />
+              </div>
+
+              {/* 카트 바퀴 */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '4px 32px' }}>
+                {[0,1].map(i => (
+                  <div key={i} style={{ width: 12, height: 12, borderRadius: '50%', border: '2px solid rgba(0,0,0,0.15)', background: C.bg }} />
+                ))}
               </div>
             </div>
 
