@@ -1091,7 +1091,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.3.9
+          © kimsogenie · v.1.4.0
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
@@ -1107,18 +1107,18 @@ export default function Home() {
     const wishBooks = books.filter(b => b.status === 'want')
     const rots = [-12, 8, -5, 10, -7, 6, -10, 9, -3, 11, -8, 5]
     const slots = [
-      { top: 28, left: 12,  rot: -12, size: 64, z: 4 },
-      { top: 24, left: 36,  rot: 8,   size: 62, z: 4 },
-      { top: 26, left: 58,  rot: -6,  size: 64, z: 4 },
-      { top: 48, left: 10,  rot: 10,  size: 60, z: 3 },
-      { top: 46, left: 34,  rot: -5,  size: 62, z: 3 },
-      { top: 50, left: 58,  rot: 9,   size: 58, z: 3 },
-      { top: 66, left: 14,  rot: -9,  size: 56, z: 2 },
-      { top: 64, left: 38,  rot: 7,   size: 54, z: 2 },
-      { top: 68, left: 60,  rot: -7,  size: 56, z: 2 },
-      { top: 36, left: 76,  rot: 11,  size: 52, z: 3 },
-      { top: 54, left: 78,  rot: -8,  size: 50, z: 2 },
-      { top: 72, left: 76,  rot: 6,   size: 48, z: 1 },
+      { top: 30, left: 28,  rot: -12, size: 62, z: 4 },
+      { top: 28, left: 48,  rot: 8,   size: 58, z: 4 },
+      { top: 32, left: 62,  rot: -6,  size: 60, z: 4 },
+      { top: 48, left: 26,  rot: 10,  size: 58, z: 3 },
+      { top: 46, left: 46,  rot: -5,  size: 60, z: 3 },
+      { top: 50, left: 62,  rot: 9,   size: 56, z: 3 },
+      { top: 64, left: 28,  rot: -9,  size: 54, z: 2 },
+      { top: 62, left: 48,  rot: 7,   size: 52, z: 2 },
+      { top: 66, left: 64,  rot: -7,  size: 54, z: 2 },
+      { top: 38, left: 68,  rot: 11,  size: 50, z: 3 },
+      { top: 54, left: 70,  rot: -8,  size: 48, z: 2 },
+      { top: 70, left: 68,  rot: 6,   size: 46, z: 1 },
     ]
 
     return (
