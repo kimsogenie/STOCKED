@@ -1150,7 +1150,7 @@ export default function Home() {
 
         {/* 하단 */}
         <div style={{ textAlign: 'center', padding: '8px 0 32px', fontSize: 10, color: C.faint, fontFamily: C.font }}>
-          © kimsogenie · v.1.4.2
+          © kimsogenie · v.1.4.3
         </div>
       </div>
     )
@@ -1177,7 +1177,7 @@ export default function Home() {
         </Head>
         {showOnboarding && <OnboardingModal onClose={handleOnboardingClose} />}
         <div style={{ padding: '20px 20px 16px', borderBottom: `0.5px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <img src="/logo.png" alt="STOCKED" style={{ height: 28, objectFit: 'contain' }} />
+          <img src="/logo.png" alt="STOCKED" onClick={() => setView('home')} style={{ height: 28, objectFit: 'contain', cursor: 'pointer' }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
             <button onClick={() => setView('wishlist')} style={{ fontSize: 18, color: C.muted, background: 'none', border: 'none', cursor: 'pointer', position: 'relative' }}>
               🛒
@@ -1242,7 +1242,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.4.2
+          © kimsogenie · v.1.4.3
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
