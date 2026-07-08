@@ -456,7 +456,7 @@ function OnboardingModal({ onClose }) {
 }
 
 export default function Home() {
-  const [view, setView] = useState('library')
+  const [view, setView] = useState('home')
   const [books, setBooks] = useState([])
   const [user, setUser] = useState(null)
   const [isGuest, setIsGuest] = useState(false)
@@ -517,6 +517,16 @@ export default function Home() {
   const [filterStatus, setFilterStatus] = useState('all')
   const [calYear, setCalYear] = useState(new Date().getFullYear())
   const [calMonth, setCalMonth] = useState(new Date().getMonth() + 1)
+  const [streak, setStreak] = useState(0)
+  const [readToday, setReadToday] = useState(false)
+
+  // 이번 주 인기 책 — 수동 업데이트
+  const POPULAR_UPDATED = '2026.7.8'
+  const POPULAR_BOOKS = [
+    { rank: 1, title: '이끼숲', author: '천선란', count: 6 },
+    { rank: 2, title: '천 개의 파랑', author: '천선란', count: 8 },
+    { rank: 3, title: '절창', author: '구병모', count: 8 },
+  ]
   const [randomReceipt, setRandomReceipt] = useState(null)
   const [quotes, setQuotes] = useState([{ text: '', page: '' }])
   const [editingField, setEditingField] = useState(null)
@@ -525,13 +535,13 @@ export default function Home() {
   useEffect(() => {
     loadRandomReceipt()
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) { setUser(session.user); loadBooks(session.user.id); checkOnboarding() }
+      if (session?.user) { setUser(session.user); loadBooks(session.user.id); loadStreak(session.user.id); checkOnboarding() }
       else setLoading(false)
     })
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session?.user) {
         const isNew = !user
-        setUser(session.user); setIsGuest(false); loadBooks(session.user.id); checkOnboarding()
+        setUser(session.user); setIsGuest(false); loadBooks(session.user.id); loadStreak(session.user.id); checkOnboarding()
         if (isNew && typeof gtag !== 'undefined') {
           gtag('event', _event === 'SIGNED_IN' ? 'login' : 'sign_up', { method: 'Google' })
         }
@@ -797,6 +807,26 @@ export default function Home() {
     setNotes(notes.map(n => n.id === noteId ? { ...n, reactions } : n))
   }
 
+  const loadStreak = async (uid) => {
+    const today = new Date().toISOString().slice(0, 10)
+    const { data } = await supabase.from('user_streaks').select('*').eq('user_id', uid).single()
+    if (data) {
+      setStreak(data.streak || 0)
+      setReadToday(data.last_active === today)
+    }
+  }
+
+  const markReadToday = async () => {
+    if (readToday || !user) return
+    const today = new Date().toISOString().slice(0, 10)
+    const yesterday = new Date(Date.now() - 86400000).toISOString().slice(0, 10)
+    const { data } = await supabase.from('user_streaks').select('*').eq('user_id', user.id).single()
+    const newStreak = data?.last_active === yesterday ? (data.streak || 0) + 1 : 1
+    await supabase.from('user_streaks').upsert({ user_id: user.id, streak: newStreak, last_active: today })
+    setStreak(newStreak)
+    setReadToday(true)
+  }
+
   const loadRandomReceipt = async () => {
     try {
       const { data } = await supabase
@@ -1005,6 +1035,127 @@ export default function Home() {
     )
   }
 
+  if (view === 'home') {
+    const readingBooks = books.filter(b => b.status === 'reading')
+    return (
+      <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg }}>
+        {/* 헤더 */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: `0.5px solid ${C.border}` }}>
+          <img src="/logo.png" alt="STOCKED" style={{ height: 24, objectFit: 'contain' }} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button onClick={() => setView('wishlist')} style={{ fontSize: 18, color: C.muted, background: 'none', border: 'none', cursor: 'pointer', position: 'relative' }}>
+              🛒
+              {books.filter(b => b.status === 'want').length > 0 && (
+                <span style={{ position: 'absolute', top: -4, right: -6, background: C.text, color: C.bg, borderRadius: '50%', width: 14, height: 14, fontSize: 9, display: 'flex', alignItems: 'center', justifyContent: 'center', fontFamily: C.font }}>
+                  {books.filter(b => b.status === 'want').length}
+                </span>
+              )}
+            </button>
+            {!isGuest && <button onClick={logout} style={{ fontSize: 11, color: C.faint, background: 'none', border: 'none', cursor: 'pointer', fontFamily: C.font }}>로그아웃</button>}
+          </div>
+        </div>
+
+        <div style={{ padding: '24px 20px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+
+          {/* 오늘도 읽었어요 */}
+          <div style={{ background: readToday ? C.text : C.bgShelf, borderRadius: 12, padding: '20px', transition: 'background 0.3s' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: readToday ? 12 : 0 }}>
+              <div>
+                <div style={{ fontSize: 16, fontWeight: 700, color: readToday ? C.bg : C.text, fontFamily: C.font, marginBottom: 4 }}>
+                  {readToday ? `🔥 ${streak}일째 연속 독서 중!` : '오늘도 책 읽었어요?'}
+                </div>
+                <div style={{ fontSize: 12, color: readToday ? 'rgba(255,255,255,0.6)' : C.muted, fontFamily: C.font }}>
+                  {readToday ? '오늘도 수고했어요 📚' : '버튼을 눌러 독서 기록을 남겨요'}
+                </div>
+              </div>
+              {!readToday && (
+                <button onClick={markReadToday} style={{
+                  background: C.text, color: C.bg, border: 'none', borderRadius: 8,
+                  padding: '10px 16px', fontSize: 13, fontWeight: 600, cursor: 'pointer', fontFamily: C.font, flexShrink: 0
+                }}>✓ 읽었어요</button>
+              )}
+            </div>
+            {readToday && streak > 1 && (
+              <div style={{ display: 'flex', gap: 6 }}>
+                {Array.from({ length: Math.min(streak, 7) }).map((_, i) => (
+                  <div key={i} style={{ width: 28, height: 4, borderRadius: 2, background: 'rgba(255,255,255,0.4)' }} />
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* 읽는 중인 책 */}
+          <div>
+            <div style={{ fontSize: 13, fontWeight: 700, color: C.text, fontFamily: C.font, marginBottom: 12 }}>📖 읽는 중</div>
+            {readingBooks.length === 0 ? (
+              <div style={{ background: C.bgShelf, borderRadius: 8, padding: '16px', fontSize: 13, color: C.muted, fontFamily: C.font, textAlign: 'center' }}>
+                지금 읽는 책을 추가해보세요
+                <div style={{ marginTop: 8 }}>
+                  <button onClick={() => setView('search')} style={{ fontSize: 12, color: C.text, background: 'none', border: `0.5px solid ${C.borderMid}`, padding: '5px 12px', cursor: 'pointer', fontFamily: C.font, borderRadius: 4 }}>책 추가하기</button>
+                </div>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 8 }}>
+                {readingBooks.map(b => (
+                  <div key={b.id} onClick={() => { setSelectedBook(b); setShowNotes(false); setDetailTab('receipt'); setView('detail') }}
+                    style={{ flexShrink: 0, cursor: 'pointer', width: 90 }}>
+                    {b.thumbnail
+                      ? <img src={b.thumbnail} alt={b.title} style={{ width: 90, height: 126, objectFit: 'cover', borderRadius: 4, boxShadow: '2px 4px 12px rgba(0,0,0,0.15)', display: 'block', marginBottom: 6 }} />
+                      : <div style={{ width: 90, height: 126, background: b.bg || '#ddd', borderRadius: 4, boxShadow: '2px 4px 12px rgba(0,0,0,0.15)', marginBottom: 6 }} />
+                    }
+                    <div style={{ fontSize: 11, color: C.text, fontFamily: C.font, lineHeight: 1.4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{b.title}</div>
+                    <div style={{ fontSize: 10, color: C.muted, fontFamily: C.font, marginTop: 2 }}>{b.author}</div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* 내 서재 가기 */}
+          <button onClick={() => setView('library')} style={{
+            background: C.bgShelf, border: `0.5px solid ${C.border}`, borderRadius: 12,
+            padding: '18px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+            cursor: 'pointer', width: '100%',
+          }}>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: C.text, fontFamily: C.font, marginBottom: 2 }}>📚 내 서재</div>
+              <div style={{ fontSize: 12, color: C.muted, fontFamily: C.font }}>{books.filter(b => b.status !== 'want').length}권 꽂혀있어요</div>
+            </div>
+            <span style={{ fontSize: 18, color: C.muted }}>→</span>
+          </button>
+
+          {/* 이번 주 인기 책 */}
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: C.text, fontFamily: C.font }}>🏆 이번 주 STOCKED 인기 책</div>
+              <div style={{ fontSize: 10, color: C.faint, fontFamily: C.font }}>{POPULAR_UPDATED} 기준</div>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              {POPULAR_BOOKS.map(b => (
+                <div key={b.rank} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '12px 14px', background: C.bgShelf, borderRadius: b.rank === 1 ? '8px 8px 0 0' : b.rank === 3 ? '0 0 8px 8px' : 0 }}>
+                  <div style={{ fontSize: b.rank === 1 ? 20 : 14, fontWeight: 700, color: b.rank === 1 ? '#E8A020' : C.muted, fontFamily: C.font, minWidth: 24, textAlign: 'center' }}>
+                    {b.rank === 1 ? '🥇' : b.rank === 2 ? '🥈' : '🥉'}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: C.text, fontFamily: C.font }}>{b.title}</div>
+                    <div style={{ fontSize: 11, color: C.muted, fontFamily: C.font }}>{b.author}</div>
+                  </div>
+                  <div style={{ fontSize: 11, color: C.faint, fontFamily: C.font }}>{b.count}명</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+        </div>
+
+        {/* 하단 */}
+        <div style={{ textAlign: 'center', padding: '8px 0 32px', fontSize: 10, color: C.faint, fontFamily: C.font }}>
+          © kimsogenie · v.1.4.2
+        </div>
+      </div>
+    )
+  }
+
   if (view === 'library') {
     return (
       <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg }}>
@@ -1091,7 +1242,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.4.1
+          © kimsogenie · v.1.4.2
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
