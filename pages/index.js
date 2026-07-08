@@ -1091,7 +1091,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.4.0
+          © kimsogenie · v.1.4.1
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
@@ -1137,7 +1137,11 @@ export default function Home() {
             <div style={{ position: 'relative', width: '100%', paddingTop: '110%' }}>
               <div style={{ position: 'absolute', inset: 0 }}>
 
-                {/* 책 표지들 — 바구니 안쪽 */}
+                {/* basket.png — 배경으로 맨 밑에 */}
+                <img src="/basket.png" alt="basket"
+                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', zIndex: 0, pointerEvents: 'none' }} />
+
+                {/* 책 표지들 — 바구니 위에 */}
                 {wishBooks.slice(0, 12).map((b, i) => {
                   const s = slots[i % slots.length]
                   const w = s.size
@@ -1166,9 +1170,6 @@ export default function Home() {
                   )
                 })}
 
-                {/* basket.png — 책들 위에 올려서 테두리가 앞에 오게 */}
-                <img src="/basket.png" alt="basket"
-                  style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', objectFit: 'contain', zIndex: 20, pointerEvents: 'none' }} />
               </div>
             </div>
 
