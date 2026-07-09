@@ -1149,7 +1149,7 @@ export default function Home() {
 
         {/* 하단 */}
         <div style={{ textAlign: 'center', padding: '8px 0 32px', fontSize: 10, color: C.faint, fontFamily: C.font }}>
-          © kimsogenie · v.1.4.4
+          © kimsogenie · v.1.4.5
         </div>
       </div>
     )
@@ -1176,8 +1176,9 @@ export default function Home() {
         </Head>
         {showOnboarding && <OnboardingModal onClose={handleOnboardingClose} />}
         <div style={{ padding: '20px 20px 16px', borderBottom: `0.5px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <img src="/logo.png" alt="STOCKED" onClick={() => setView('home')} style={{ height: 28, objectFit: 'contain', cursor: 'pointer' }} />
+          <img src="/logo.png" alt="STOCKED" style={{ height: 28, objectFit: 'contain' }} />
           <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+            <button onClick={() => setView('home')} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 20, color: C.muted, lineHeight: 1 }}>🏠</button>
             <button onClick={() => setView('wishlist')} style={{ fontSize: 18, color: C.muted, background: 'none', border: 'none', cursor: 'pointer', position: 'relative' }}>
               🛒
               {books.filter(b => b.status === 'want').length > 0 && (
@@ -1241,7 +1242,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.4.4
+          © kimsogenie · v.1.4.5
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
@@ -1273,7 +1274,7 @@ export default function Home() {
 
     return (
       <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: '#EDEAE3' }}>
-        <NavBar onBack={() => setView('library')} title="위시리스트" right="" />
+        <NavBar onBack={() => setView('home')} title="위시리스트" right="" />
 
         {wishBooks.length === 0 ? (
           <div style={{ textAlign: 'center', padding: '80px 20px', color: C.muted, fontFamily: C.font }}>
