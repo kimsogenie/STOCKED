@@ -521,11 +521,11 @@ export default function Home() {
   const [readToday, setReadToday] = useState(false)
 
   // 이번 주 인기 책 — 수동 업데이트
-  const POPULAR_UPDATED = '2026.7.8'
+  const POPULAR_UPDATED = '2026.7.7'
   const POPULAR_BOOKS = [
-    { rank: 1, title: '이끼숲', author: '천선란', count: 6 },
-    { rank: 2, title: '천 개의 파랑', author: '천선란', count: 8 },
-    { rank: 3, title: '절창', author: '구병모', count: 8 },
+    { rank: 1, title: '당신의 자랑이 되려고', author: '조우리' },
+    { rank: 2, title: '독일인의 사랑', author: '막스 뮐러' },
+    { rank: 3, title: '나의 이브 생 로랑에게', author: '피에르 베르제' },
   ]
   const [randomReceipt, setRandomReceipt] = useState(null)
   const [quotes, setQuotes] = useState([{ text: '', page: '' }])
@@ -892,7 +892,7 @@ export default function Home() {
               읽은 책을 서재에 꽂고<br />명대사를 영수증으로
             </div>
             <div style={{ fontSize: 12, color: C.muted, fontFamily: C.font, lineHeight: 1.7 }}>
-              책 spine이 쌓이는 나만의 서재를 만들고,<br />기억하고 싶은 문장을 영수증으로 저장하세요.
+              책 한 권 한 권을 기록하고,<br />기억하고 싶은 문장을 영수증으로 저장하세요.
             </div>
           </div>
 
@@ -1140,7 +1140,6 @@ export default function Home() {
                     <div style={{ fontSize: 13, fontWeight: 600, color: C.text, fontFamily: C.font }}>{b.title}</div>
                     <div style={{ fontSize: 11, color: C.muted, fontFamily: C.font }}>{b.author}</div>
                   </div>
-                  <div style={{ fontSize: 11, color: C.faint, fontFamily: C.font }}>{b.count}명</div>
                 </div>
               ))}
             </div>
@@ -1150,7 +1149,7 @@ export default function Home() {
 
         {/* 하단 */}
         <div style={{ textAlign: 'center', padding: '8px 0 32px', fontSize: 10, color: C.faint, fontFamily: C.font }}>
-          © kimsogenie · v.1.4.3
+          © kimsogenie · v.1.4.4
         </div>
       </div>
     )
@@ -1242,7 +1241,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.4.3
+          © kimsogenie · v.1.4.4
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
