@@ -1037,6 +1037,7 @@ export default function Home() {
 
   if (view === 'home') {
     const readingBooks = books.filter(b => b.status === 'reading')
+    const favBooks = books.filter(b => b.rating === 5)
     return (
       <div style={{ maxWidth: 480, margin: '0 auto', minHeight: '100vh', background: C.bg }}>
         {/* 헤더 */}
@@ -1111,6 +1112,32 @@ export default function Home() {
             )}
           </div>
 
+          {/* 내 인생책 */}
+          {favBooks.length > 0 && (
+            <div>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
+                <div style={{ fontSize: 13, fontWeight: 700, color: C.text, fontFamily: C.font }}>⭐ 내 인생책</div>
+                <div style={{ fontSize: 11, color: C.faint, fontFamily: C.font }}>{favBooks.length}권</div>
+              </div>
+              <div style={{ display: 'flex', gap: 12, overflowX: 'auto', paddingBottom: 8 }}>
+                {favBooks.map(b => (
+                  <div key={b.id} onClick={() => { setSelectedBook(b); setShowNotes(false); setDetailTab('receipt'); setView('detail') }}
+                    style={{ flexShrink: 0, cursor: 'pointer', width: 80 }}>
+                    <div style={{ position: 'relative', marginBottom: 6 }}>
+                      {b.thumbnail
+                        ? <img src={b.thumbnail} alt={b.title} style={{ width: 80, height: 112, objectFit: 'cover', borderRadius: 4, boxShadow: '2px 4px 12px rgba(0,0,0,0.18)', display: 'block' }} />
+                        : <div style={{ width: 80, height: 112, background: b.bg || '#ddd', borderRadius: 4, boxShadow: '2px 4px 12px rgba(0,0,0,0.18)' }} />
+                      }
+                      <div style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(0,0,0,0.65)', borderRadius: 3, padding: '2px 5px', fontSize: 9, color: '#E8A020', letterSpacing: '-0.5px' }}>★★★★★</div>
+                    </div>
+                    <div style={{ fontSize: 11, color: C.text, fontFamily: C.font, lineHeight: 1.4, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' }}>{b.title}</div>
+                    <div style={{ fontSize: 10, color: C.muted, fontFamily: C.font, marginTop: 2 }}>{b.author}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {/* 내 서재 가기 */}
           <button onClick={() => setView('library')} style={{
             background: C.bgShelf, border: `0.5px solid ${C.border}`, borderRadius: 12,
@@ -1149,7 +1176,7 @@ export default function Home() {
 
         {/* 하단 */}
         <div style={{ textAlign: 'center', padding: '8px 0 32px', fontSize: 10, color: C.faint, fontFamily: C.font }}>
-          © kimsogenie · v.1.5.1
+          © kimsogenie · v.1.5.2
         </div>
       </div>
     )
@@ -1242,7 +1269,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.5.1
+          © kimsogenie · v.1.5.2
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
