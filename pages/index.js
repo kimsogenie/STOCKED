@@ -634,23 +634,33 @@ export default function Home() {
     if (isAddingBook) return
     setIsAddingBook(true)
     try {
-    // 1. 페이지 수: Google Books ISBN → title fallback
-    let pages = 250
-    const isbn = (kakaoBook.isbn || '').split(' ').find(s => s.length >= 10)
-    try {
-      if (isbn) {
-        const r = await fetch(`https://www.googleapis.com/books/v1/volumes?q=isbn:${isbn}&maxResults=1`)
+    // 1. 페이지 수: Google Books (ISBN13 → ISBN10 → 제목+저자 → 제목)
+    let pages = 0
+    const isbnParts = (kakaoBook.isbn || '').split(' ').filter(Boolean)
+    const isbn13 = isbnParts.find(s => s.length === 13)
+    const isbn10 = isbnParts.find(s => s.length === 10)
+    const isbn = isbn13 || isbn10 || ''
+
+    const tryGoogle = async (query) => {
+      try {
+        const r = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${query}&maxResults=3`)
         const d = await r.json()
-        const p = d.items?.[0]?.volumeInfo?.pageCount
-        if (p > 0) pages = p
-      }
-      if (pages === 250 && kakaoBook.title) {
-        const r = await fetch(`https://www.googleapis.com/books/v1/volumes?q=${encodeURIComponent(kakaoBook.title)}&maxResults=1`)
-        const d = await r.json()
-        const p = d.items?.[0]?.volumeInfo?.pageCount
-        if (p > 0) pages = p
-      }
-    } catch {}
+        for (const item of (d.items || [])) {
+          const p = item?.volumeInfo?.pageCount
+          if (p > 0) return p
+        }
+      } catch {}
+      return 0
+    }
+
+    if (isbn13) pages = await tryGoogle(`isbn:${isbn13}`)
+    if (!pages && isbn10) pages = await tryGoogle(`isbn:${isbn10}`)
+    if (!pages && kakaoBook.title) {
+      const author = kakaoBook.authors?.[0] || ''
+      if (author) pages = await tryGoogle(`intitle:${encodeURIComponent(kakaoBook.title)}+inauthor:${encodeURIComponent(author)}`)
+    }
+    if (!pages && kakaoBook.title) pages = await tryGoogle(encodeURIComponent(kakaoBook.title))
+    if (!pages) pages = 250
 
     // 2. 표지 컬러 추출 → 타이틀 해시 기반 고유 파스텔 컬러
     const colorSet = (() => {
@@ -1176,7 +1186,7 @@ export default function Home() {
 
         {/* 하단 */}
         <div style={{ textAlign: 'center', padding: '8px 0 32px', fontSize: 10, color: C.faint, fontFamily: C.font }}>
-          © kimsogenie · v.1.5.4
+          © kimsogenie · v.1.5.5
         </div>
       </div>
     )
@@ -1269,7 +1279,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.5.4
+          © kimsogenie · v.1.5.5
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
