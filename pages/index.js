@@ -521,11 +521,11 @@ export default function Home() {
   const [readToday, setReadToday] = useState(false)
 
   // 이번 주 인기 책 — 수동 업데이트
-  const POPULAR_UPDATED = '2026.8.10'
+  const POPULAR_UPDATED = '2026.8.17'
   const POPULAR_BOOKS = [
-    { rank: 1, title: '네버 라이', author: '프리다 맥파든' },
-    { rank: 2, title: '뉴욕의 영웅이 된 오로르', author: '더글라스 케네디' },
-    { rank: 3, title: '무리하지 않는 선에서', author: '한수희' },
+    { rank: 1, title: '대온실 수리 보고서', author: '김금희' },
+    { rank: 2, title: '스티커', author: '김선미' },
+    { rank: 3, title: '노랜드', author: '천선란' },
   ]
   const [randomReceipt, setRandomReceipt] = useState(null)
   const [quotes, setQuotes] = useState([{ text: '', page: '' }])
@@ -1176,7 +1176,7 @@ export default function Home() {
 
         {/* 하단 */}
         <div style={{ textAlign: 'center', padding: '8px 0 32px', fontSize: 10, color: C.faint, fontFamily: C.font }}>
-          © kimsogenie · v.1.5.2
+          © kimsogenie · v.1.5.3
         </div>
       </div>
     )
@@ -1269,7 +1269,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.5.2
+          © kimsogenie · v.1.5.3
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
