@@ -521,16 +521,18 @@ export default function Home() {
   const [readToday, setReadToday] = useState(false)
 
   // 이번 주 인기 책 — 수동 업데이트
-  const POPULAR_UPDATED = '2026.8.31'
+  const POPULAR_UPDATED = '2026.9.7'
   const POPULAR_BOOKS = [
-    { rank: 1, title: '대온실 수리 보고서', author: '김금희' },
-    { rank: 2, title: '스티커', author: '김선미' },
-    { rank: 3, title: '노랜드', author: '천선란' },
+    { rank: 1, title: '허밍', author: '최정원' },
+    { rank: 2, title: '만조를 기다리며', author: '조예은' },
+    { rank: 3, title: '나의 사탄', author: '백은별' },
   ]
   const [randomReceipt, setRandomReceipt] = useState(null)
   const [quotes, setQuotes] = useState([{ text: '', page: '' }])
   const [editingField, setEditingField] = useState(null)
   const receiptRef = useRef(null)
+  const shelfRef = useRef(null)
+  const [savingShelf, setSavingShelf] = useState(false)
 
   useEffect(() => {
     loadRandomReceipt()
@@ -874,6 +876,31 @@ export default function Home() {
     } catch { alert('이미지 저장 중 오류가 발생했습니다') }
   }
 
+  const saveShelfAsImage = async () => {
+    if (!shelfRef.current) return
+    setSavingShelf(true)
+    try {
+      const html2canvas = (await import('html2canvas')).default
+      const canvas = await html2canvas(shelfRef.current, {
+        scale: 2,
+        backgroundColor: '#EEEBE4',
+        useCORS: true,
+        allowTaint: true,
+      })
+      const dataUrl = canvas.toDataURL('image/png')
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent)
+      if (isIOS) {
+        setImgPreview(dataUrl)
+      } else {
+        const link = document.createElement('a')
+        link.download = `stocked_shelf_${new Date().toISOString().slice(0,10)}.png`
+        link.href = dataUrl
+        link.click()
+      }
+    } catch { alert('이미지 저장 중 오류가 발생했습니다') }
+    setSavingShelf(false)
+  }
+
   const inputStyle = {
     width: '100%', padding: '11px 12px', fontSize: 15,
     border: `0.5px solid ${C.borderMid}`, background: 'transparent', color: C.text,
@@ -1186,7 +1213,7 @@ export default function Home() {
 
         {/* 하단 */}
         <div style={{ textAlign: 'center', padding: '8px 0 32px', fontSize: 10, color: C.faint, fontFamily: C.font }}>
-          © kimsogenie · v.1.5.5
+          © kimsogenie · v.1.5.7
         </div>
       </div>
     )
@@ -1257,19 +1284,29 @@ export default function Home() {
           </div>
         )}
 
-        <BookShelf
-          books={books}
-          onBookClick={(b) => { setSelectedBook(b); setShowNotes(false); setDetailTab('receipt'); setView('detail') }}
-          onAddClick={() => setView('search')}
-          sortBy={sortBy}
-          setSortBy={setSortBy}
-          filterStatus={filterStatus}
-          setFilterStatus={setFilterStatus}
-          calYear={calYear}
-          setCalYear={setCalYear}
-          calMonth={calMonth}
-          setCalMonth={setCalMonth}
-        />
+        <div ref={shelfRef}>
+          <BookShelf
+            books={books}
+            onBookClick={(b) => { setSelectedBook(b); setShowNotes(false); setDetailTab('receipt'); setView('detail') }}
+            onAddClick={() => setView('search')}
+            sortBy={sortBy}
+            setSortBy={setSortBy}
+            filterStatus={filterStatus}
+            setFilterStatus={setFilterStatus}
+            calYear={calYear}
+            setCalYear={setCalYear}
+            calMonth={calMonth}
+            setCalMonth={setCalMonth}
+          />
+        </div>
+
+        {books.length > 0 && (
+          <div style={{ padding: '16px 20px 0' }}>
+            <button onClick={saveShelfAsImage} disabled={savingShelf} style={{ ...btnOutline, opacity: savingShelf ? 0.6 : 1 }}>
+              {savingShelf ? '저장 중...' : '책장 이미지로 저장하기 📷'}
+            </button>
+          </div>
+        )}
 
         {books.length === 0 && (
           <div style={{ textAlign: 'center', padding: '40px 20px', color: C.muted, fontSize: 14, lineHeight: 2, fontFamily: C.font }}>
@@ -1279,7 +1316,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.5.5
+          © kimsogenie · v.1.5.7
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
