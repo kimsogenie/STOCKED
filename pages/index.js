@@ -528,6 +528,7 @@ export default function Home() {
     { rank: 3, title: '급류', author: '정대건' },
   ]
   const [randomReceipt, setRandomReceipt] = useState(null)
+  const [randomNote, setRandomNote] = useState(null)
   const [quotes, setQuotes] = useState([{ text: '', page: '' }])
   const [editingField, setEditingField] = useState(null)
   const receiptRef = useRef(null)
@@ -536,6 +537,7 @@ export default function Home() {
 
   useEffect(() => {
     loadRandomReceipt()
+    loadRandomNote()
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) { setUser(session.user); loadBooks(session.user.id); loadStreak(session.user.id); checkOnboarding() }
       else setLoading(false)
@@ -837,6 +839,19 @@ export default function Home() {
     await supabase.from('user_streaks').upsert({ user_id: user.id, streak: newStreak, last_active: today })
     setStreak(newStreak)
     setReadToday(true)
+  }
+
+  const loadRandomNote = async () => {
+    try {
+      const { data } = await supabase
+        .from('notes')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(30)
+      if (data && data.length > 0) {
+        setRandomNote(data[Math.floor(Math.random() * data.length)])
+      }
+    } catch {}
   }
 
   const loadRandomReceipt = async () => {
@@ -1175,6 +1190,51 @@ export default function Home() {
             </div>
           )}
 
+          {/* 오늘의 쪽지 */}
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 12 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: C.text, fontFamily: C.font }}>✉ 오늘의 쪽지</div>
+              <div style={{ fontSize: 10, color: C.faint, fontFamily: C.font }}>다른 독자가 남긴 기록</div>
+            </div>
+            {randomNote ? (
+              <div
+                onClick={() => {
+                  const target = books.find(b => b.title === randomNote.book_key || b.title === randomNote.book_title)
+                  if (target) { setSelectedBook(target); setShowNotes(true); setDetailTab('receipt'); loadNotes(target.title); setView('detail') }
+                }}
+                style={{
+                  background: '#FFFDF5', border: `0.5px solid rgba(0,0,0,0.08)`,
+                  borderRadius: 3, padding: '16px 14px',
+                  boxShadow: '1px 2px 8px rgba(0,0,0,0.06)',
+                  cursor: books.some(b => b.title === randomNote.book_key || b.title === randomNote.book_title) ? 'pointer' : 'default',
+                  transform: 'rotate(-0.6deg)',
+                }}
+              >
+                <div style={{ fontSize: 10, color: C.faint, fontFamily: C.font, marginBottom: 8, letterSpacing: '0.05em' }}>
+                  『{randomNote.book_title || randomNote.book_key}』
+                </div>
+                <div style={{ fontSize: 13, color: C.text, fontFamily: C.font, lineHeight: 1.8, marginBottom: 10, whiteSpace: 'pre-wrap' }}>
+                  {randomNote.content.length > 120 ? randomNote.content.slice(0, 120) + '…' : randomNote.content}
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ fontSize: 10, color: C.faint, fontFamily: C.font }}>{randomNote.nickname} · {randomNote.created_at?.slice(0, 10)}</div>
+                  <div style={{ fontSize: 13, letterSpacing: 2 }}>
+                    {['🥹','💙','🫂'].map(e => (
+                      <span key={e} style={{ opacity: randomNote.reactions?.[e] ? 1 : 0.25 }}>{e}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div style={{ background: '#FFFDF5', border: `0.5px dashed rgba(0,0,0,0.15)`, borderRadius: 3, padding: '20px 16px', textAlign: 'center' }}>
+                <div style={{ fontSize: 13, color: C.text, fontFamily: C.font, marginBottom: 6 }}>아직 쪽지가 없어요</div>
+                <div style={{ fontSize: 11, color: C.muted, fontFamily: C.font, lineHeight: 1.7 }}>
+                  책 상세 화면에서 읽은 소감을 익명으로 남겨보세요<br />같은 책을 읽은 사람들이 보게 돼요
+                </div>
+              </div>
+            )}
+          </div>
+
           {/* 내 서재 가기 */}
           <button onClick={() => setView('library')} style={{
             background: C.bgShelf, border: `0.5px solid ${C.border}`, borderRadius: 12,
@@ -1213,7 +1273,7 @@ export default function Home() {
 
         {/* 하단 */}
         <div style={{ textAlign: 'center', padding: '8px 0 32px', fontSize: 10, color: C.faint, fontFamily: C.font }}>
-          © kimsogenie · v.1.5.8
+          © kimsogenie · v.1.5.9
         </div>
       </div>
     )
@@ -1316,7 +1376,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.5.8
+          © kimsogenie · v.1.5.9
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
