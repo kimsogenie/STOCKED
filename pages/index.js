@@ -555,6 +555,27 @@ export default function Home() {
     return () => subscription.unsubscribe()
   }, [])
 
+  // 화면 전환 시 가상 페이지뷰 전송 (SPA → GA 화면별 추적)
+  useEffect(() => {
+    if (typeof gtag === 'undefined') return
+    const PATHS = {
+      home: { path: '/home', title: 'STOCKED — 홈' },
+      library: { path: '/library', title: 'STOCKED — 내 서재' },
+      wishlist: { path: '/wishlist', title: 'STOCKED — 위시리스트' },
+      search: { path: '/search', title: 'STOCKED — 책 추가' },
+      detail: { path: '/book', title: 'STOCKED — 책 상세' },
+      form: { path: '/receipt-form', title: 'STOCKED — 영수증 발급' },
+      receipt: { path: '/receipt', title: 'STOCKED — 영수증' },
+    }
+    const p = PATHS[view]
+    if (!p) return
+    gtag('event', 'page_view', {
+      page_path: p.path,
+      page_title: p.title,
+      page_location: window.location.origin + p.path,
+    })
+  }, [view])
+
   const checkOnboarding = () => {
     if (!localStorage.getItem('stocked_onboarding_seen')) setShowOnboarding(true)
   }
@@ -810,6 +831,7 @@ export default function Home() {
     setNoteModal(false)
     setNoteSending(false)
     await loadNotes(selectedBook?.title)
+    if (typeof gtag !== 'undefined') gtag('event', 'submit_note', { book_title: selectedBook?.title })
   }
 
   const addNoteReaction = async (noteId, emoji) => {
@@ -839,6 +861,7 @@ export default function Home() {
     await supabase.from('user_streaks').upsert({ user_id: user.id, streak: newStreak, last_active: today })
     setStreak(newStreak)
     setReadToday(true)
+    if (typeof gtag !== 'undefined') gtag('event', 'mark_read_today', { streak: newStreak })
   }
 
   const loadRandomNote = async () => {
@@ -1200,7 +1223,10 @@ export default function Home() {
               <div
                 onClick={() => {
                   const target = books.find(b => b.title === randomNote.book_key || b.title === randomNote.book_title)
-                  if (target) { setSelectedBook(target); setShowNotes(true); setDetailTab('receipt'); loadNotes(target.title); setView('detail') }
+                  if (target) {
+                    if (typeof gtag !== 'undefined') gtag('event', 'click_daily_note')
+                    setSelectedBook(target); setShowNotes(true); setDetailTab('receipt'); loadNotes(target.title); setView('detail')
+                  }
                 }}
                 style={{
                   background: '#FFFDF5', border: `0.5px solid rgba(0,0,0,0.08)`,
@@ -1273,7 +1299,7 @@ export default function Home() {
 
         {/* 하단 */}
         <div style={{ textAlign: 'center', padding: '8px 0 32px', fontSize: 10, color: C.faint, fontFamily: C.font }}>
-          © kimsogenie · v.1.5.9
+          © kimsogenie · v.1.6.0
         </div>
       </div>
     )
@@ -1376,7 +1402,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.5.9
+          © kimsogenie · v.1.6.0
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
