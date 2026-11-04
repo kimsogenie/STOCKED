@@ -247,12 +247,19 @@ function BookShelf({ books, onBookClick, onAddClick, sortBy, setSortBy, filterSt
     if (sortBy === 'default') return [{ label: null, books: filteredBooks }]
     const map = {}
     filteredBooks.forEach(b => {
-      const date = b.readDate || ''
-      const key = sortBy === 'year' ? date.slice(0, 4) : date.slice(0, 7)
-      if (!map[key]) map[key] = []
-      map[key].push(b)
+      // 2026.9.15 / 2026.09.15 둘 다 처리
+      const parts = (b.readDate || '').split('.').filter(Boolean)
+      const y = parseInt(parts[0]) || 0
+      const m = parseInt(parts[1]) || 0
+      // 정렬용 숫자 키 (연도별: 202600, 월별: 202609)
+      const sortKey = sortBy === 'year' ? y * 100 : y * 100 + m
+      const label = sortBy === 'year' ? `${y}.` : `${y}.${String(m).padStart(2, '0')}.`
+      if (!map[sortKey]) map[sortKey] = { label, books: [] }
+      map[sortKey].books.push(b)
     })
-    return Object.entries(map).sort((a, b) => b[0].localeCompare(a[0])).map(([k, v]) => ({ label: k, books: v }))
+    return Object.entries(map)
+      .sort((a, b) => Number(b[0]) - Number(a[0]))
+      .map(([, v]) => v)
   })()
 
   // 공통 탭바 JSX
@@ -521,11 +528,11 @@ export default function Home() {
   const [readToday, setReadToday] = useState(false)
 
   // 이번 주 인기 책 — 수동 업데이트
-  const POPULAR_UPDATED = '2026.9.15'
+  const POPULAR_UPDATED = '2026.11.3'
   const POPULAR_BOOKS = [
-    { rank: 1, title: '라스트 젤리 샷', author: '청예' },
-    { rank: 2, title: '빵충 사육 준수 사항', author: '김혜영' },
-    { rank: 3, title: '급류', author: '정대건' },
+    { rank: 1, title: '수족관', author: '유래혁' },
+    { rank: 2, title: '스토너', author: '존 윌리엄스' },
+    { rank: 3, title: '위저드 베이커리', author: '구병모' },
   ]
   const [randomReceipt, setRandomReceipt] = useState(null)
   const [randomNote, setRandomNote] = useState(null)
@@ -1299,7 +1306,7 @@ export default function Home() {
 
         {/* 하단 */}
         <div style={{ textAlign: 'center', padding: '8px 0 32px', fontSize: 10, color: C.faint, fontFamily: C.font }}>
-          © kimsogenie · v.1.6.0
+          © kimsogenie · v.1.6.2
         </div>
       </div>
     )
@@ -1402,7 +1409,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.6.0
+          © kimsogenie · v.1.6.2
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
