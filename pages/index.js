@@ -565,6 +565,22 @@ export default function Home() {
   // 화면 전환 시 가상 페이지뷰 전송 (SPA → GA 화면별 추적)
   useEffect(() => {
     if (typeof gtag === 'undefined') return
+    if (loading) return
+
+    const send = (path, title) => {
+      gtag('event', 'page_view', {
+        page_path: path,
+        page_title: title,
+        page_location: window.location.origin + path,
+      })
+    }
+
+    // 로그인 안 한 상태 → 로그인 화면으로 별도 집계
+    if (!user && !isGuest) {
+      send('/login', 'STOCKED — 로그인')
+      return
+    }
+
     const PATHS = {
       home: { path: '/home', title: 'STOCKED — 홈' },
       library: { path: '/library', title: 'STOCKED — 내 서재' },
@@ -576,12 +592,8 @@ export default function Home() {
     }
     const p = PATHS[view]
     if (!p) return
-    gtag('event', 'page_view', {
-      page_path: p.path,
-      page_title: p.title,
-      page_location: window.location.origin + p.path,
-    })
-  }, [view])
+    send(p.path, p.title)
+  }, [view, user, isGuest, loading])
 
   const checkOnboarding = () => {
     if (!localStorage.getItem('stocked_onboarding_seen')) setShowOnboarding(true)
@@ -637,6 +649,7 @@ export default function Home() {
   }
 
   const loginWithGoogle = async () => {
+    if (typeof gtag !== 'undefined') gtag('event', 'click_google_login')
     await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: window.location.origin } })
   }
 
@@ -1269,7 +1282,10 @@ export default function Home() {
           </div>
 
           {/* 내 서재 가기 */}
-          <button onClick={() => setView('library')} style={{
+          <button onClick={() => {
+            if (typeof gtag !== 'undefined') gtag('event', 'go_to_library', { from: 'home' })
+            setView('library')
+          }} style={{
             background: C.bgShelf, border: `0.5px solid ${C.border}`, borderRadius: 12,
             padding: '18px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
             cursor: 'pointer', width: '100%',
@@ -1306,7 +1322,7 @@ export default function Home() {
 
         {/* 하단 */}
         <div style={{ textAlign: 'center', padding: '8px 0 32px', fontSize: 10, color: C.faint, fontFamily: C.font }}>
-          © kimsogenie · v.1.6.2
+          © kimsogenie · v.1.6.3
         </div>
       </div>
     )
@@ -1409,7 +1425,7 @@ export default function Home() {
         )}
 
         <div style={{ textAlign: 'center', padding: '24px 20px 8px', fontSize: 13, color: C.muted, fontFamily: C.mono, letterSpacing: '0.08em' }}>
-          © kimsogenie · v.1.6.2
+          © kimsogenie · v.1.6.3
         </div>
         <div style={{ textAlign: 'center', paddingBottom: 24 }}>
           <button onClick={() => setErrorModal(true)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 11, color: C.faint, fontFamily: C.mono, letterSpacing: '0.06em', textDecoration: 'underline' }}>
